@@ -32,14 +32,12 @@ resetAnswers();
 
 async function initData(){
   loadMsg.className = 'load-msg';
-  loadMsg.innerHTML = '<span class="spinner"></span>Loading ' + DATA_FILE + '…';
   startBtn.disabled = true;
   try{
     PIPELINES = await loadPipelinesFromXlsx(DATA_FILE);
     if(factCount) factCount.textContent = PIPELINES.length;
     if(footFile) footFile.textContent = DATA_FILE;
     loadMsg.className = 'load-msg';
-    loadMsg.textContent = `✓ ${PIPELINES.length} pipelines loaded from ${DATA_FILE}`;
     startBtn.disabled = false;
   }catch(err){
     loadMsg.className = 'load-msg err';

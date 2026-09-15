@@ -27,9 +27,9 @@
     <div class="top-right">
       <div class="theme-tag mono" id="themeTag">Criteria</div>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark theme" title="Toggle light / dark theme">
-      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
     </div>
   </header>
 
@@ -74,73 +74,99 @@
   .val-yes{ color: var(--y-axis); font-weight:600; }
   .val-no{ color: var(--muted); }
   .val-text{ font-family:'IBM Plex Mono', monospace; font-size: 12px; white-space: normal; max-width: 34ch; }
+  table.criteria-table tr.section-header td{
+    background: rgba(76, 140, 224, 0.12) !important;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--z-axis);
+    padding: 10px 12px 6px;
+    border-top: 2px solid rgba(76, 140, 224, 0.3);
+    border-bottom: 1px solid rgba(76, 140, 224, 0.2);
+    position: sticky; left: 0;
+  }
 </style>
 
 <script>
 const cat = getCategoryFromUrl();
 const subNav = document.getElementById('subNav');
 
-const BOOL_TRUE_DISPLAY = new Set(["yes","true","1","✔","x","oui","vrai"]);
+const BOOL_TRUE_DISPLAY  = new Set(["yes","true","1","✔","x","oui","vrai"]);
 const BOOL_FALSE_DISPLAY = new Set(["no","false","0","✘","non","faux",""]);
 
 function renderCell(raw){
-  const v = String(raw || "").trim();
+  const v   = String(raw || "").trim();
   const low = v.toLowerCase();
-  if(BOOL_TRUE_DISPLAY.has(low)) return '<span class="val-yes">✔</span>';
+  if(BOOL_TRUE_DISPLAY.has(low))  return '<span class="val-yes">✔</span>';
   if(BOOL_FALSE_DISPLAY.has(low)) return '<span class="val-no">✘</span>';
   return `<span class="val-text">${v}</span>`;
 }
 
 if(!cat){
-  document.getElementById('pageLede').textContent = 'No valid category was specified in the URL (expected e.g. criteria.html?cat=adult).';
+  document.getElementById('pageLede').textContent =
+    'No valid category was specified in the URL (expected e.g. criteria.html?cat=adult).';
   document.getElementById('loadMsg').textContent = '';
 } else {
-  const meta = CATEGORIES[cat];
-  document.getElementById('themeTag').textContent = meta.label;
+  const meta    = CATEGORIES[cat];
+  // ✅ Correction clé : meta.file (et non meta.xlsx qui était undefined)
+  const xlsxUrl = meta.file;
+
+  document.getElementById('themeTag').textContent  = meta.label;
   document.getElementById('pageTitle').textContent = `${meta.label} — Criteria`;
   subNav.innerHTML = `
-    <a class="tab-btn" href="${meta.quizPage}">Quiz</a>
+    <a class="tab-btn" href="${meta.page}">Quiz</a>
     <a class="tab-btn" href="pipelines.html?cat=${cat}">Pipelines</a>
     <a class="tab-btn active" href="criteria.html?cat=${cat}">Criteria</a>
     <a class="tab-btn" href="questions.html?cat=${cat}">Questions</a>
   `;
 
-  const loadMsg = document.getElementById('loadMsg');
-  const wrap = document.getElementById('tableWrap');
-  const scrollTop = document.getElementById('scrollTop');
+  const loadMsg       = document.getElementById('loadMsg');
+  const wrap          = document.getElementById('tableWrap');
+  const scrollTop     = document.getElementById('scrollTop');
   const scrollTopInner = document.getElementById('scrollTopInner');
-  loadMsg.innerHTML = '<span class="spinner"></span>Loading ' + meta.xlsx + '…';
 
-  loadCriteriaGrid(meta.xlsx).then(({ pipelineNames, rows })=>{
+  loadCriteriaGrid(xlsxUrl).then(({ pipelineNames, rows }) => {
     rows = rows.filter(r => r.id !== 'desc');
-    rows = rows.filter(r => r.id !== 'GENERAL');
-    loadMsg.textContent = `✓ ${rows.length} criteria × ${pipelineNames.length} pipelines, from ${meta.xlsx}`;
+
+    loadMsg.textContent = `✓ ${rows.length} criteria × ${pipelineNames.length} pipelines`;
+
     let html = '<table class="criteria-table"><thead><tr><th>Criterion</th>';
     pipelineNames.forEach(n => html += `<th>${n}</th>`);
     html += '</tr></thead><tbody>';
-    rows.forEach(r=>{
-      html += `<tr><td>${r.label}</td>`;
-      r.values.forEach(v => html += `<td>${renderCell(v)}</td>`);
-      html += '</tr>';
+
+    rows.forEach(r => {
+      const isSection = r.values.every(v => v === "");
+      if(isSection){
+        html += `<tr class="section-header"><td colspan="${pipelineNames.length + 1}">${r.label || r.id}</td></tr>`;
+      } else {
+        html += `<tr><td>${r.label}</td>`;
+        r.values.forEach(v => html += `<td>${renderCell(v)}</td>`);
+        html += '</tr>';
+      }
     });
+
     html += '</tbody></table>';
     wrap.innerHTML = html;
 
-    // top scrollbar mirrors the table's own horizontal scroll
+    // Scrollbar miroir en haut du tableau
     const table = wrap.querySelector('table');
     scrollTopInner.style.width = table.scrollWidth + 'px';
     let syncing = false;
-    scrollTop.addEventListener('scroll', ()=>{
+    scrollTop.addEventListener('scroll', () => {
       if(syncing) return; syncing = true;
       wrap.scrollLeft = scrollTop.scrollLeft;
       syncing = false;
     });
-    wrap.addEventListener('scroll', ()=>{
+    wrap.addEventListener('scroll', () => {
       if(syncing) return; syncing = true;
       scrollTop.scrollLeft = wrap.scrollLeft;
       syncing = false;
     });
-  }).catch(err=>{
+
+  }).catch(err => {
+    const loadMsg = document.getElementById('loadMsg');
     loadMsg.className = 'load-msg err';
     loadMsg.textContent = `Error: ${err.message}`;
   });
