@@ -113,6 +113,7 @@ if(!cat){
 
   loadCriteriaGrid(meta.xlsx).then(({ pipelineNames, rows })=>{
     rows = rows.filter(r => r.id !== 'desc');
+    rows = rows.filter(r => r.id !== 'GENERAL');
     loadMsg.textContent = `✓ ${rows.length} criteria × ${pipelineNames.length} pipelines, from ${meta.xlsx}`;
     let html = '<table class="criteria-table"><thead><tr><th>Criterion</th>';
     pipelineNames.forEach(n => html += `<th>${n}</th>`);
