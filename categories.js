@@ -3,7 +3,7 @@
 const CATEGORIES = {
   adult:      { label: "Adult human",           xlsx: "data/adult.xlsx",      questionsFile: "adult-questions.js",      quizPage: "adult.html" },
   pediatric:  { label: "Pediatric human",        xlsx: "data/pediatric.xlsx",  questionsFile: "pediatric-questions.js",  quizPage: "pediatric.html" },
-  mouse:      { label: "Mouse",                  xlsx: "data/mouse.xlsx",      questionsFile: "mouse-questions.js",      quizPage: "mouse.html" },
+  rodent:      { label: "Rodent",                  xlsx: "data/rodent.xlsx",      questionsFile: "rodent-questions.js",      quizPage: "rodent.html" },
   monkey:     { label: "Monkey",                 xlsx: "data/monkey.xlsx",     questionsFile: "monkey-questions.js",     quizPage: "monkey.html" },
 };
 

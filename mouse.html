@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Diffusion Compass — Mouse dMRI pipeline finder</title>
+<title>Diffusion Compass — Rodent dMRI pipeline finder</title>
 <link rel="stylesheet" href="style.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="xlsx-loader.js"></script>
@@ -25,7 +25,7 @@
     <a class="brand" href="index.html"><img src="image/logo.png" class="logo-img" alt="Diffusion Compass logo"> Diffusion Compass</a>
     <div class="top-right">
 
-      <div class="theme-tag mono">Mouse</div>
+      <div class="theme-tag mono">Rodent</div>
 
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark theme" title="Toggle light / dark theme">
       <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
@@ -36,10 +36,10 @@
   </header>
 
   <div class="tabs" role="tablist">
-    <a class="tab-btn active" href="mouse.html">Quiz</a>
-    <a class="tab-btn" href="pipelines.html?cat=mouse">Pipelines</a>
-    <a class="tab-btn" href="criteria.html?cat=mouse">Criteria</a>
-    <a class="tab-btn" href="questions.html?cat=mouse">Questions</a>
+    <a class="tab-btn active" href="rodent.html">Quiz</a>
+    <a class="tab-btn" href="pipelines.html?cat=rodent">Pipelines</a>
+    <a class="tab-btn" href="criteria.html?cat=rodent">Criteria</a>
+    <a class="tab-btn" href="questions.html?cat=rodent">Questions</a>
   </div>
 
 
@@ -65,8 +65,8 @@
   </div>
 
   <section class="screen active intro" id="screen-intro">
-    <h1>Which pipeline fits <span class="accent">your</span> mouse diffusion data?</h1>
-    <p class="lede">Answer a series of questions about your data, your compute environment and your analysis needs. ⚠️ This category currently ships with placeholder/example data — replace <code class="mono">data/mouse.xlsx</code> with your real comparison table when it's ready.</p>
+    <h1>Which pipeline fits <span class="accent">your</span> rodent diffusion data?</h1>
+    <p class="lede">Answer a series of questions about your data, your compute environment and your analysis needs. ⚠️ This category currently ships with placeholder/example data — replace <code class="mono">data/rodent.xlsx</code> with your real comparison table when it's ready.</p>
 
     <div class="facts">
       <div class="fact"><b id="factCount">—</b><span>pipelines compared</span></div>
@@ -103,16 +103,16 @@
   </section>
 
   <footer class="foot">
-    Data loaded from <span id="footFile" class="mono">data/mouse.xlsx</span> — edit this spreadsheet to update pipelines, no code changes needed. · <a class="btn-ghost" href="index.html" style="padding:2px 8px;">← All categories</a>
+    Data loaded from <span id="footFile" class="mono">data/rodent.xlsx</span> — edit this spreadsheet to update pipelines, no code changes needed. · <a class="btn-ghost" href="index.html" style="padding:2px 8px;">← All categories</a>
   </footer>
 </div>
 
 <script>
-window.DATA_FILE = "data/mouse.xlsx";
+window.DATA_FILE = "data/rodent.xlsx";
 
-// Questions for this category are defined in mouse-questions.js
+// Questions for this category are defined in rodent-questions.js
 </script>
-<script src="mouse-questions.js"></script>
+<script src="rodent-questions.js"></script>
 <script src="engine.js"></script>
 </body>
 </html>
