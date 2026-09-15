@@ -8,7 +8,7 @@ No installation needed to use it — it's a website.
 
 ## What it does
 
-1. Pick your study population on the home page: **Adult human**, **Pediatric human**, **Mouse**, or **Monkey**.
+1. Pick your study population on the home page: **Adult human**, **Pediatric human**, **Rodent**, or **Monkey**.
 2. Answer a handful of questions about your data, your compute setup, and what you need the analysis to do.
 3. Get a ranked list of the pipelines that fit best, with a link to each one's page so you can dig further.
 

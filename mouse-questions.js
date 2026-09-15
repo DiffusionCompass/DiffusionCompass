@@ -1,5 +1,5 @@
-/* Mouse — quiz questions. Loaded by mouse.html (the quiz) and by
-   questions.html?cat=mouse (the read-only summary page).
+/* Rodent — quiz questions. Loaded by rodent.html (the quiz) and by
+   questions.html?cat=rodent (the read-only summary page).
    Each option may have: filter (blocking constraint), score (preference
    points), note (plain-language explanation shown on the summary page). */
 window.QUESTIONS = [
@@ -14,14 +14,14 @@ window.QUESTIONS = [
         note:"Blocking filter: keeps only pipelines that support compressed-sensing / non-Cartesian sampling." },
       { label:"Not sure", filter:null, note:"No constraint applied." },
     ]},
-  // --- Mouse-specific question: not present in the other questionnaires.
+  // --- Rodent-specific question: not present in the other questionnaires.
   // "atlasSupport" is a free-text criterion (pass-through from the Excel
-  // file) — add an "atlasSupport" row in data/mouse.xlsx to use it.
+  // file) — add an "atlasSupport" row in data/rodent.xlsx to use it.
   { id:"atlas", eyebrow:"Reference space", type:"single",
     title:"Which reference atlas or template do you need support for?",
     options:[
-      { label:"Allen Mouse Brain Atlas", score:p=>String(p.atlasSupport||"").toLowerCase().includes("allen") ? 4 : 0,
-        note:"+4 pts if the pipeline's atlasSupport field mentions the Allen Mouse Brain Atlas." },
+      { label:"Allen Rodent Brain Atlas", score:p=>String(p.atlasSupport||"").toLowerCase().includes("allen") ? 4 : 0,
+        note:"+4 pts if the pipeline's atlasSupport field mentions the Allen Rodent Brain Atlas." },
       { label:"Waxholm Space atlas", score:p=>String(p.atlasSupport||"").toLowerCase().includes("waxholm") ? 4 : 0,
         note:"+4 pts if the pipeline's atlasSupport field mentions Waxholm Space." },
       { label:"Not sure / no specific atlas", score:null, note:"No points awarded — this question is skipped in scoring." },

@@ -1,5 +1,5 @@
 /* =========================================================================
-   SHARED ENGINE — used by adult.html, pediatric.html, mouse.html, monkey.html
+   SHARED ENGINE — used by adult.html, pediatric.html, rodent.html, monkey.html
    Each page must define, BEFORE loading this script:
      - window.DATA_FILE   (string, e.g. "data/adult.xlsx")
      - window.QUESTIONS   (array, category-specific — loaded from its own
