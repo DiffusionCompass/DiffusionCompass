@@ -70,7 +70,7 @@
 
     <div class="facts">
       <div class="fact"><b id="factCount">—</b><span>pipelines compared</span></div>
-      <div class="fact"><b>~36</b><span>technical criteria</span></div>
+      <div class="fact"><b id="factCriteria">—</b><span>technical criteria</span></div>
       <div class="fact"><b>8</b><span>questions to answer</span></div>
     </div>
 
@@ -109,10 +109,19 @@
 
 <script>
 window.DATA_FILE = "data/rodent.xlsx";
-
-// Questions for this category are defined in rodent-questions.js
 </script>
 <script src="rodent-questions.js"></script>
 <script src="engine.js"></script>
+<script>
+(async function(){
+  try{
+    const { dataRows } = await fetchSheetGrid(window.DATA_FILE);
+    const UNCOUNTED = new Set(['desc','website','link','url','github','repo','repository','site']);
+    const count = dataRows.filter(r => !r.isSection && !UNCOUNTED.has(r.id.toLowerCase())).length;
+    const el = document.getElementById('factCriteria');
+    if(el) el.textContent = count;
+  }catch(e){ console.warn('factCriteria:', e); }
+})();
+</script>
 </body>
 </html>

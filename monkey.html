@@ -42,7 +42,6 @@
     <a class="tab-btn" href="questions.html?cat=monkey">Questions</a>
   </div>
 
-
   <div class="streamline-wrap" id="streamlineWrap" style="display:none;">
     <svg viewBox="0 0 700 46" preserveAspectRatio="none">
       <path id="track" d="M2,23 C120,4 180,42 260,23 C340,4 400,42 480,23 C560,4 620,42 698,23"
@@ -70,7 +69,7 @@
 
     <div class="facts">
       <div class="fact"><b id="factCount">—</b><span>pipelines compared</span></div>
-      <div class="fact"><b>~36</b><span>technical criteria</span></div>
+      <div class="fact"><b id="factCriteria">—</b><span>technical criteria</span></div>
       <div class="fact"><b>8</b><span>questions to answer</span></div>
     </div>
 
@@ -109,10 +108,19 @@
 
 <script>
 window.DATA_FILE = "data/monkey.xlsx";
-
-// Questions for this category are defined in monkey-questions.js
 </script>
 <script src="monkey-questions.js"></script>
 <script src="engine.js"></script>
+<script>
+(async function(){
+  try{
+    const { dataRows } = await fetchSheetGrid(window.DATA_FILE);
+    const UNCOUNTED = new Set(['desc','website','link','url','github','repo','repository','site']);
+    const count = dataRows.filter(r => !r.isSection && !UNCOUNTED.has(r.id.toLowerCase())).length;
+    const el = document.getElementById('factCriteria');
+    if(el) el.textContent = count;
+  }catch(e){ console.warn('factCriteria:', e); }
+})();
+</script>
 </body>
 </html>

@@ -37,7 +37,6 @@
 
   <div class="q-eyebrow">Reference</div>
   <h2 class="q-title" style="margin-bottom:6px;" id="pageTitle">Criteria</h2>
-  <p class="lede" style="margin-bottom:22px;" id="pageLede">The full comparison table for this category, read directly from its Excel file.</p>
 
   <div class="load-msg" id="loadMsg"></div>
   <div class="table-scroll-top" id="scrollTop"><div id="scrollTopInner"></div></div>
@@ -90,6 +89,9 @@
 </style>
 
 <script>
+const EXCLUDED_IDS = new Set(['desc']);           // hidden from table entirely
+const UNCOUNTED_IDS = new Set(['website', 'link', 'url', 'github', 'repo', 'repository', 'site']); // shown but not counted
+
 const cat = getCategoryFromUrl();
 const subNav = document.getElementById('subNav');
 
@@ -105,12 +107,9 @@ function renderCell(raw){
 }
 
 if(!cat){
-  document.getElementById('pageLede').textContent =
-    'No valid category was specified in the URL (expected e.g. criteria.html?cat=adult).';
-  document.getElementById('loadMsg').textContent = '';
+  document.getElementById('loadMsg').textContent = 'No valid category was specified in the URL (expected e.g. criteria.html?cat=adult).';
 } else {
   const meta    = CATEGORIES[cat];
-  // ✅ Correction clé : meta.file (et non meta.xlsx qui était undefined)
   const xlsxUrl = meta.file;
 
   document.getElementById('themeTag').textContent  = meta.label;
@@ -122,23 +121,23 @@ if(!cat){
     <a class="tab-btn" href="questions.html?cat=${cat}">Questions</a>
   `;
 
-  const loadMsg       = document.getElementById('loadMsg');
-  const wrap          = document.getElementById('tableWrap');
-  const scrollTop     = document.getElementById('scrollTop');
+  const loadMsg        = document.getElementById('loadMsg');
+  const wrap           = document.getElementById('tableWrap');
+  const scrollTop      = document.getElementById('scrollTop');
   const scrollTopInner = document.getElementById('scrollTopInner');
 
   loadCriteriaGrid(xlsxUrl).then(({ pipelineNames, rows }) => {
-    rows = rows.filter(r => r.id !== 'desc');
+    rows = rows.filter(r => !EXCLUDED_IDS.has(r.id.toLowerCase()));
 
-    loadMsg.textContent = `✓ ${rows.length} criteria × ${pipelineNames.length} pipelines`;
+    const criteriaCount = rows.filter(r => !r.isSection && !UNCOUNTED_IDS.has(r.id.toLowerCase())).length;
+    loadMsg.textContent = `✓ ${criteriaCount} criteria × ${pipelineNames.length} pipelines`;
 
     let html = '<table class="criteria-table"><thead><tr><th>Criterion</th>';
     pipelineNames.forEach(n => html += `<th>${n}</th>`);
     html += '</tr></thead><tbody>';
 
     rows.forEach(r => {
-      const isSection = r.values.every(v => v === "");
-      if(isSection){
+      if(r.isSection){
         html += `<tr class="section-header"><td colspan="${pipelineNames.length + 1}">${r.label || r.id}</td></tr>`;
       } else {
         html += `<tr><td>${r.label}</td>`;
@@ -150,7 +149,6 @@ if(!cat){
     html += '</tbody></table>';
     wrap.innerHTML = html;
 
-    // Scrollbar miroir en haut du tableau
     const table = wrap.querySelector('table');
     scrollTopInner.style.width = table.scrollWidth + 'px';
     let syncing = false;
@@ -166,7 +164,6 @@ if(!cat){
     });
 
   }).catch(err => {
-    const loadMsg = document.getElementById('loadMsg');
     loadMsg.className = 'load-msg err';
     loadMsg.textContent = `Error: ${err.message}`;
   });
