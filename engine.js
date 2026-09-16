@@ -1,45 +1,45 @@
 /* =========================================================================
-   SHARED ENGINE — used by adult.html, pediatric.html, rodent.html, monkey.html
-   Each page must define, BEFORE loading this script:
-     - window.DATA_FILE   (string, e.g. "data/adult.xlsx")
-     - window.QUESTIONS   (array, category-specific — loaded from its own
-                            {category}-questions.js file)
-   The HTML markup (element ids) must be identical across all category pages.
-   Requires xlsx-loader.js to be loaded first (provides loadPipelinesFromXlsx).
+   SHARED ENGINE
    ========================================================================= */
 
-/* ======================= ENGINE STATE / DOM WIRING ======================= */
 let PIPELINES = [];
 let current = 0;
 let answers = [];
 
-const screenIntro = document.getElementById('screen-intro');
-const screenQuiz = document.getElementById('screen-quiz');
+const screenIntro  = document.getElementById('screen-intro');
+const screenQuiz   = document.getElementById('screen-quiz');
 const screenResult = document.getElementById('screen-result');
 const streamlineWrap = document.getElementById('streamlineWrap');
-const fillPath = document.getElementById('fill');
+const fillPath  = document.getElementById('fill');
 const stepLabel = document.getElementById('stepLabel');
-const stepPct = document.getElementById('stepPct');
-const loadMsg = document.getElementById('loadMsg');
-const startBtn = document.getElementById('startBtn');
+const stepPct   = document.getElementById('stepPct');
+const loadMsg   = document.getElementById('loadMsg');
+const startBtn  = document.getElementById('startBtn');
 const factCount = document.getElementById('factCount');
-const footFile = document.getElementById('footFile');
+const footFile  = document.getElementById('footFile');
 
-function resetAnswers(){
-  answers = QUESTIONS.map(()=>[]);
-}
+function resetAnswers(){ answers = QUESTIONS.map(()=>[]); }
 resetAnswers();
 
 async function initData(){
   loadMsg.className = 'load-msg';
-  loadMsg.innerHTML = '<span class="spinner"></span>Loading ' + DATA_FILE + '…';
   startBtn.disabled = true;
   try{
+    // fetchSheetGrid puis loadPipelinesFromXlsx partagent le même cache HTTP
+    const { dataRows } = await fetchSheetGrid(DATA_FILE);
     PIPELINES = await loadPipelinesFromXlsx(DATA_FILE);
+
     if(factCount) factCount.textContent = PIPELINES.length;
-    if(footFile) footFile.textContent = DATA_FILE;
+    if(footFile)  footFile.textContent  = DATA_FILE;
+
+    const factCriteria = document.getElementById('factCriteria');
+    if(factCriteria){
+      const UNCOUNTED = new Set(['desc','website','link','url','github','repo','repository','site']);
+      const count = dataRows.filter(r => !r.isSection && !UNCOUNTED.has(r.id.toLowerCase())).length;
+      factCriteria.textContent = count;
+    }
+
     loadMsg.className = 'load-msg';
-    loadMsg.textContent = `✓ ${PIPELINES.length} pipelines loaded from ${DATA_FILE}`;
     startBtn.disabled = false;
   }catch(err){
     loadMsg.className = 'load-msg err';
@@ -78,33 +78,29 @@ document.getElementById('backBtn').addEventListener('click', ()=>{
 });
 
 document.getElementById('nextBtn').addEventListener('click', ()=>{
-  if(current < QUESTIONS.length - 1){
-    current++;
-    renderQuestion();
-  } else {
-    computeResults();
-  }
+  if(current < QUESTIONS.length - 1){ current++; renderQuestion(); }
+  else { computeResults(); }
 });
 
 function updateProgress(){
   const total = QUESTIONS.length;
-  const pct = Math.round((current) / total * 100);
+  const pct = Math.round(current / total * 100);
   const len = fillPath.getTotalLength ? fillPath.getTotalLength() : 1000;
-  fillPath.style.strokeDasharray = len;
-  fillPath.style.strokeDashoffset = len - (len * (current/total));
+  fillPath.style.strokeDasharray  = len;
+  fillPath.style.strokeDashoffset = len - (len * (current / total));
   if(current >= total){
     stepLabel.textContent = 'Results';
-    stepPct.textContent = '100%';
+    stepPct.textContent   = '100%';
   } else {
     stepLabel.textContent = `Question ${current+1} / ${total}`;
-    stepPct.textContent = pct + '%';
+    stepPct.textContent   = pct + '%';
   }
 }
 
 function renderQuestion(){
   const q = QUESTIONS[current];
   document.getElementById('qEyebrow').textContent = q.eyebrow;
-  document.getElementById('qTitle').textContent = q.title;
+  document.getElementById('qTitle').textContent   = q.title;
   const hintEl = document.getElementById('qHint');
   if(hintEl) hintEl.textContent = q.type === 'multi' ? '☑ Multiple choice — select all that apply' : '';
   const wrap = document.getElementById('qOptions');
@@ -115,17 +111,16 @@ function renderQuestion(){
     if(answers[current].includes(idx)) el.classList.add('checked');
     el.innerHTML = `<span class="mark"></span><span>${opt.label}</span>`;
     el.addEventListener('click', ()=>{
-      if(q.type === 'single'){
-        answers[current] = [idx];
-      } else {
+      if(q.type === 'single'){ answers[current] = [idx]; }
+      else {
         const i = answers[current].indexOf(idx);
-        if(i>-1) answers[current].splice(i,1); else answers[current].push(idx);
+        if(i > -1) answers[current].splice(i, 1); else answers[current].push(idx);
       }
       renderQuestion();
     });
     wrap.appendChild(el);
   });
-  document.getElementById('nextBtn').disabled = answers[current].length === 0;
+  document.getElementById('nextBtn').disabled    = answers[current].length === 0;
   document.getElementById('nextBtn').textContent = current === QUESTIONS.length-1 ? 'See result →' : 'Next →';
   updateProgress();
 }
@@ -141,28 +136,19 @@ function computeResults(){
   QUESTIONS.forEach((q, qi)=>{
     answers[qi].forEach(oi=>{
       const opt = q.options[oi];
-      if(opt.filter){
-        appliedFilters.push(opt.label);
-        pool = pool.filter(opt.filter);
-      }
+      if(opt.filter){ appliedFilters.push(opt.label); pool = pool.filter(opt.filter); }
     });
   });
 
   let fallback = false;
-  if(pool.length === 0){
-    fallback = true;
-    pool = PIPELINES.slice();
-  }
+  if(pool.length === 0){ fallback = true; pool = PIPELINES.slice(); }
 
   const scored = pool.map(p=>{
     let total = 0;
     QUESTIONS.forEach((q, qi)=>{
       answers[qi].forEach(oi=>{
         const opt = q.options[oi];
-        if(opt.score){
-          const pts = opt.score(p);
-          if(pts > 0) total += pts;
-        }
+        if(opt.score){ const pts = opt.score(p); if(pts > 0) total += pts; }
       });
     });
     return { p, total };
@@ -184,12 +170,11 @@ function computeResults(){
 
   const listEl = document.getElementById('rankList');
   listEl.innerHTML = '';
-  if(!top.length){
-    listEl.innerHTML = `<div class="filters-note">No pipeline available in this data file.</div>`;
-  }
+  if(!top.length){ listEl.innerHTML = `<div class="filters-note">No pipeline available in this data file.</div>`; }
+
   top.forEach((entry, i)=>{
-    const p = entry.p;
-    const pct = maxScore>0 ? Math.max(6, Math.round(entry.total / maxScore * 100)) : 0;
+    const p   = entry.p;
+    const pct = maxScore > 0 ? Math.max(6, Math.round(entry.total / maxScore * 100)) : 0;
     const card = document.createElement('div');
     card.className = 'rank-card' + (i===0 ? ' first' : '');
     card.innerHTML = `
@@ -199,19 +184,16 @@ function computeResults(){
           <div class="rank-name">${p.name}</div>
           <div class="rank-desc">${p.desc || ''}</div>
         </div>
-        <div class="rank-score">
-          <b>${entry.total}</b>
-          <span>points</span>
-        </div>
+        <div class="rank-score"><b>${entry.total}</b><span>points</span></div>
       </div>
       <div class="score-bar"><i style="width:${pct}%"></i></div>
       ${p.website ? `<a class="visit-link" href="${p.website}" target="_blank" rel="noopener">↗ Visit ${p.name} website / GitHub</a>` : ''}
       <div class="chips">
         ${p.interface ? `<span class="chip">${p.interface}</span>` : ''}
         ${p.containerized ? `<span class="chip">containerized</span>` : ''}
-        ${p.tractography ? `<span class="chip">tractography</span>` : ''}
-        ${p.gpu ? `<span class="chip">GPU</span>` : ''}
-        ${p.activity>=3 ? `<span class="chip">actively maintained</span>` : `<span class="chip warn">slow maintenance</span>`}
+        ${p.tractography  ? `<span class="chip">tractography</span>`  : ''}
+        ${p.gpu           ? `<span class="chip">GPU</span>`           : ''}
+        ${p.activity >= 3 ? `<span class="chip">actively maintained</span>` : `<span class="chip warn">slow maintenance</span>`}
       </div>
     `;
     listEl.appendChild(card);
@@ -221,5 +203,4 @@ function computeResults(){
   screenResult.classList.add('active');
 }
 
-// kick off
 initData();

@@ -1,12 +1,5 @@
 /* =========================================================================
-   SHARED XLSX LOADER — used by engine.js (the quiz) and by pipelines.html /
-   criteria.html (the read-only detail views).
-
-   EXCEL FILE FORMAT expected in the "Pipelines" sheet:
-   - Col A: criterion_id   (technical key, e.g. multiShell, interface, activity...)
-   - Col B: criterion_label (human-readable label, shown in the criteria table)
-   - Col C, D, E...: one column per pipeline, header = pipeline name
-   Accepted boolean values: yes/no, true/false, 1/0, ✔/✘, x
+   SHARED XLSX LOADER
    ========================================================================= */
 
 const BOOL_TRUE = new Set(["yes","true","1","✔","x","oui","vrai"]);
@@ -31,8 +24,6 @@ const BOOL_FIELDS = ["gpu","parallel","polyvalent","resume","bids","gradientChec
   "testRetest","signalDrift"];
 const NUM_FIELDS = { modifiability:1, hpcLevel:1, activity:1 };
 
-/* Fetches + parses the sheet's raw grid. Returns { header, rows, byId } where
-   byId maps a lowercase criterion_id to its full row array (including label). */
 async function fetchSheetGrid(url){
   const res = await fetch(url, { cache: "no-store" });
   if(!res.ok) throw new Error(`File not found (${res.status}): ${url}`);
@@ -54,11 +45,13 @@ async function fetchSheetGrid(url){
   const byId = {};
   const dataRows = [];
   for(let r = 1; r < rows.length; r++){
-    const id = String(rows[r][0] || "").trim();
+    const id    = String(rows[r][0] || "").trim();
     const label = String(rows[r][1] || "").trim();
     if(!id) continue;
-    byId[id.toLowerCase()] = rows[r];
-    dataRows.push({ id, label, row: rows[r] });
+    // Col B (label) empty => section header row
+    const isSection = label === "";
+    if(!isSection) byId[id.toLowerCase()] = rows[r];
+    dataRows.push({ id, label, row: rows[r], isSection });
   }
 
   return { pipelineCols, dataRows, byId };
@@ -71,7 +64,7 @@ function findWebsiteValue(byId, col){
   return "";
 }
 
-/* Returns an array of parsed pipeline objects (used by the quiz engine). */
+/* Returns an array of parsed pipeline objects — signature inchangée */
 async function loadPipelinesFromXlsx(url){
   const { pipelineCols, dataRows, byId } = await fetchSheetGrid(url);
   const knownIds = new Set(["desc","interface","scalability", ...BOOL_FIELDS, ...Object.keys(NUM_FIELDS), ...WEBSITE_ID_ALIASES]);
@@ -89,20 +82,19 @@ async function loadPipelinesFromXlsx(url){
     for(const field of BOOL_FIELDS){
       p[field] = parseBool(get(field));
     }
-    dataRows.forEach(({id})=>{
-      if(!knownIds.has(id)) p[id] = String(get(id) || "").trim();
+    dataRows.forEach(({id, isSection})=>{
+      if(!isSection && !knownIds.has(id)) p[id] = String(get(id) || "").trim();
     });
     return p;
   });
 }
 
-/* Returns the full grid for display purposes (criteria.html):
-   { pipelineNames: [...], rows: [{ id, label, values: [...] }] } */
+/* Returns the full grid for criteria.html */
 async function loadCriteriaGrid(url){
   const { pipelineCols, dataRows } = await fetchSheetGrid(url);
   const pipelineNames = pipelineCols.map(p => p.name);
-  const rows = dataRows.map(({id, label, row})=>({
-    id, label: label || id,
+  const rows = dataRows.map(({id, label, row, isSection})=>({
+    id, label: label || id, isSection,
     values: pipelineCols.map(({col}) => String(row[col] ?? "").trim()),
   }));
   return { pipelineNames, rows };

@@ -27,9 +27,9 @@
     <div class="top-right">
       <div class="theme-tag mono" id="themeTag">Pipelines</div>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark theme" title="Toggle light / dark theme">
-      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
     </div>
   </header>
 
@@ -71,25 +71,25 @@ const subNav = document.getElementById('subNav');
 
 if(!cat){
   document.getElementById('pageLede').textContent = 'No valid category was specified in the URL (expected e.g. pipelines.html?cat=adult).';
-  document.getElementById('loadMsg').textContent = '';
 } else {
   const meta = CATEGORIES[cat];
-  document.getElementById('themeTag').textContent = meta.label;
+  // ✅ meta.file  (pas meta.xlsx)
+  // ✅ meta.page  (pas meta.quizPage)
+  document.getElementById('themeTag').textContent  = meta.label;
   document.getElementById('pageTitle').textContent = `${meta.label} — Pipelines`;
   subNav.innerHTML = `
-    <a class="tab-btn" href="${meta.quizPage}">Quiz</a>
+    <a class="tab-btn" href="${meta.page}">Quiz</a>
     <a class="tab-btn active" href="pipelines.html?cat=${cat}">Pipelines</a>
     <a class="tab-btn" href="criteria.html?cat=${cat}">Criteria</a>
     <a class="tab-btn" href="questions.html?cat=${cat}">Questions</a>
   `;
 
   const loadMsg = document.getElementById('loadMsg');
-  const listEl = document.getElementById('pipelineList');
-  loadMsg.innerHTML = '<span class="spinner"></span>Loading ' + meta.xlsx + '…';
+  const listEl  = document.getElementById('pipelineList');
 
-  loadPipelinesFromXlsx(meta.xlsx).then(pipelines=>{
-    loadMsg.textContent = `✓ ${pipelines.length} pipelines loaded from ${meta.xlsx}`;
-    pipelines.forEach(p=>{
+  loadPipelinesFromXlsx(meta.file).then(pipelines => {
+    loadMsg.textContent = `✓ ${pipelines.length} pipelines loaded`;
+    pipelines.forEach(p => {
       const card = document.createElement('div');
       card.className = 'pipeline-card';
       const link = p.website
@@ -104,7 +104,7 @@ if(!cat){
       `;
       listEl.appendChild(card);
     });
-  }).catch(err=>{
+  }).catch(err => {
     loadMsg.className = 'load-msg err';
     loadMsg.textContent = `Error: ${err.message}`;
   });
