@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="image/flavicon.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diffusion Compass — Rodent dMRI pipeline finder</title>
@@ -26,7 +27,9 @@
     <div class="top-right">
 
       <div class="theme-tag mono">Rodent</div>
-
+      <a href="https://github.com/DifussionCompass/DifussionCompass" target="_blank" rel="noopener noreferrer">
+        <img src="image/logo_github.png" alt="Description" style="height:36px; width:auto; display:block;">
+      </a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark theme" title="Toggle light / dark theme">
       <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -71,7 +74,7 @@
     <div class="facts">
       <div class="fact"><b id="factCount">—</b><span>pipelines compared</span></div>
       <div class="fact"><b id="factCriteria">—</b><span>technical criteria</span></div>
-      <div class="fact"><b>8</b><span>questions to answer</span></div>
+      <div class="fact"><b id="factQuestions">—</b><span>questions to answer</span></div>
     </div>
 
     <div class="load-msg" id="loadMsg"></div>
@@ -118,9 +121,13 @@ window.DATA_FILE = "data/rodent.xlsx";
     const { dataRows } = await fetchSheetGrid(window.DATA_FILE);
     const UNCOUNTED = new Set(['desc','website','link','url','github','repo','repository','site']);
     const count = dataRows.filter(r => !r.isSection && !UNCOUNTED.has(r.id.toLowerCase())).length;
-    const el = document.getElementById('factCriteria');
-    if(el) el.textContent = count;
+    const elC = document.getElementById('factCriteria');
+    if(elC) elC.textContent = count;
   }catch(e){ console.warn('factCriteria:', e); }
+  const elQ = document.getElementById('factQuestions');
+  if(elQ && window.QUESTIONS) elQ.textContent = window.QUESTIONS.length;
+  const stepLabel = document.getElementById('stepLabel');
+  if(stepLabel && window.QUESTIONS) stepLabel.textContent = `Question 1 / ${window.QUESTIONS.length}`;
 })();
 </script>
 </body>
