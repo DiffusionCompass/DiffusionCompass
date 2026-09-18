@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<link rel="icon" type="image/png" href="image/flavicon.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diffusion Compass — Criteria</title>
@@ -19,13 +20,16 @@
 </script>
 </head>
 <body>
-<div class="app app-wide">
+<div class="app">
 <script src="theme.js"></script>
 
   <header class="top">
     <a class="brand" href="index.html"><img src="image/logo.png" class="logo-img" alt="Diffusion Compass logo"> Diffusion Compass</a>
     <div class="top-right">
       <div class="theme-tag mono" id="themeTag">Criteria</div>
+      <a href="https://github.com/DifussionCompass/DifussionCompass" target="_blank" rel="noopener noreferrer">
+        <img src="image/logo_github.png" alt="Description" style="height:36px; width:auto; display:block;">
+      </a>
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark theme" title="Toggle light / dark theme">
         <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -35,7 +39,6 @@
 
   <div class="tabs" role="tablist" id="subNav"></div>
 
-  <div class="q-eyebrow">Reference</div>
   <h2 class="q-title" style="margin-bottom:6px;" id="pageTitle">Criteria</h2>
 
   <div class="load-msg" id="loadMsg"></div>
@@ -48,51 +51,97 @@
 </div>
 
 <style>
-  .app-wide{ max-width: min(96vw, 1800px); }
+  .app-wide{ max-width: min(4vw, 1600px); }
+
   .table-scroll-top{ overflow-x:auto; overflow-y:hidden; height:16px; margin-bottom:4px; }
   .table-scroll-top > div{ height:1px; }
   .table-scroll{ overflow-x:auto; border: 1px solid var(--line); border-radius: var(--radius); }
+
   table.criteria-table{ border-collapse: collapse; width:100%; font-size: 13px; }
-  table.criteria-table th, table.criteria-table td{
-    padding: 8px 12px; border-bottom: 1px solid var(--line); text-align:left; white-space: nowrap;
+
+  table.criteria-table th,
+  table.criteria-table td{
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    white-space: nowrap;
   }
+
+  /* ── Sticky header row ── */
   table.criteria-table thead th{
-    background: var(--surface-alt); font-family:'IBM Plex Mono', monospace; font-size: 11.5px;
-    text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);
-    position: sticky; top:0; z-index: 2;
+    background: var(--surface-alt);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    position: sticky;
+    top: 0;
+    z-index: 2;
   }
   table.criteria-table thead th:first-child{ left:0; z-index:3; }
-  table.criteria-table td:first-child, table.criteria-table th:first-child{
-    position: sticky; left:0; background: var(--surface); font-weight:600; z-index:1;
+
+  /* ── Sticky first column ── */
+  table.criteria-table td:first-child,
+  table.criteria-table th:first-child{
+    position: sticky;
+    left: 0;
+    background: var(--surface);
+    font-weight: 600;
+    z-index: 1;
     box-shadow: 2px 0 0 var(--line);
   }
-  table.criteria-table tbody tr:nth-child(odd) td{ background: var(--surface); }
-  table.criteria-table tbody tr:nth-child(odd) td:first-child{ background: var(--surface); }
-  table.criteria-table tbody tr:nth-child(even) td{ background: var(--surface-alt); }
-  table.criteria-table tbody tr:nth-child(even) td:first-child{ background: var(--surface-alt); }
-  .val-yes{ color: var(--y-axis); font-weight:600; }
-  .val-no{ color: var(--muted); }
-  .val-text{ font-family:'IBM Plex Mono', monospace; font-size: 12px; white-space: normal; max-width: 34ch; }
+
+  /* ── Alternating row backgrounds ── */
+  table.criteria-table tbody tr:nth-child(odd)  td             { background: var(--surface); }
+  table.criteria-table tbody tr:nth-child(odd)  td:first-child { background: var(--surface); }
+  table.criteria-table tbody tr:nth-child(even) td             { background: var(--surface-alt); }
+  table.criteria-table tbody tr:nth-child(even) td:first-child { background: var(--surface-alt); }
+
+  /* ── Value renderers ── */
+  .val-yes  { color: var(--y-axis); font-weight: 600; }
+  .val-no   { color: var(--muted); }
+  .val-text { font-family: 'IBM Plex Mono', monospace; font-size: 12px; white-space: normal; max-width: 34ch; }
+
+  /* ── Section-header rows ──────────────────────────────────────────────
+     FIX: the <td> with colspan must NOT be position:sticky — that broke
+     the row when the table was scrolled horizontally (the cell stayed
+     pinned to the left and its text appeared "unfixed / floating").
+     Instead we keep the <td> fully static so it spans the whole row,
+     and make the inner <span class="section-label"> sticky so the text
+     label stays readable while the user scrolls right.
+  ─────────────────────────────────────────────────────────────────────── */
   table.criteria-table tr.section-header td{
     background: rgba(76, 140, 224, 0.12) !important;
+    padding: 10px 12px 6px;
+    border-top: 2px solid rgba(76, 140, 224, 0.3);
+    border-bottom: 1px solid rgba(76, 140, 224, 0.2);
+    /* Reset sticky that was applied via the td:first-child rule above */
+    position: static !important;
+    box-shadow: none !important;
+    font-weight: normal; /* reset bold from first-child rule */
+  }
+
+  table.criteria-table tr.section-header .section-label{
+    /* The label itself sticks to the left viewport edge while scrolling */
+    position: sticky;
+    left: 12px;
+    display: inline-block;
     font-family: 'IBM Plex Mono', monospace;
     font-size: 11px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--z-axis);
-    padding: 10px 12px 6px;
-    border-top: 2px solid rgba(76, 140, 224, 0.3);
-    border-bottom: 1px solid rgba(76, 140, 224, 0.2);
-    position: sticky; left: 0;
+    white-space: nowrap;
   }
 </style>
 
 <script>
-const EXCLUDED_IDS = new Set(['desc']);           // hidden from table entirely
-const UNCOUNTED_IDS = new Set(['website', 'link', 'url', 'github', 'repo', 'repository', 'site']); // shown but not counted
+const EXCLUDED_IDS  = new Set(['desc', 'general']);
+const UNCOUNTED_IDS = new Set(['website','link','url','github','repo','repository','site']);
 
-const cat = getCategoryFromUrl();
+const cat    = getCategoryFromUrl();
 const subNav = document.getElementById('subNav');
 
 const BOOL_TRUE_DISPLAY  = new Set(["yes","true","1","✔","x","oui","vrai"]);
@@ -107,7 +156,8 @@ function renderCell(raw){
 }
 
 if(!cat){
-  document.getElementById('loadMsg').textContent = 'No valid category was specified in the URL (expected e.g. criteria.html?cat=adult).';
+  document.getElementById('loadMsg').textContent =
+    'No valid category was specified in the URL (expected e.g. criteria.html?cat=adult).';
 } else {
   const meta    = CATEGORIES[cat];
   const xlsxUrl = meta.file;
@@ -129,7 +179,9 @@ if(!cat){
   loadCriteriaGrid(xlsxUrl).then(({ pipelineNames, rows }) => {
     rows = rows.filter(r => !EXCLUDED_IDS.has(r.id.toLowerCase()));
 
-    const criteriaCount = rows.filter(r => !r.isSection && !UNCOUNTED_IDS.has(r.id.toLowerCase())).length;
+    const criteriaCount = rows.filter(
+      r => !r.isSection && !UNCOUNTED_IDS.has(r.id.toLowerCase())
+    ).length;
     loadMsg.textContent = `✓ ${criteriaCount} criteria × ${pipelineNames.length} pipelines`;
 
     let html = '<table class="criteria-table"><thead><tr><th>Criterion</th>';
@@ -138,7 +190,12 @@ if(!cat){
 
     rows.forEach(r => {
       if(r.isSection){
-        html += `<tr class="section-header"><td colspan="${pipelineNames.length + 1}">${r.label || r.id}</td></tr>`;
+        /* colspan td stays static — only the inner span is sticky */
+        html += `<tr class="section-header">
+          <td colspan="${pipelineNames.length + 1}">
+            <span class="section-label">${r.label || r.id}</span>
+          </td>
+        </tr>`;
       } else {
         html += `<tr><td>${r.label}</td>`;
         r.values.forEach(v => html += `<td>${renderCell(v)}</td>`);
@@ -149,6 +206,7 @@ if(!cat){
     html += '</tbody></table>';
     wrap.innerHTML = html;
 
+    /* Sync the phantom top scrollbar with the real table */
     const table = wrap.querySelector('table');
     scrollTopInner.style.width = table.scrollWidth + 'px';
     let syncing = false;
