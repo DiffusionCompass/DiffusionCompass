@@ -1,79 +1,409 @@
-/* Adult human — quiz questions. Loaded by adult.html (the quiz) and by
-   questions.html?cat=adult (the read-only summary page).
+/* Adult human — quiz questions.
+   Used by adult.html (interactive quiz) and questions.html?cat=adult
+   (read-only summary page).
+
    Each option may have:
-   - filter: a hard, blocking constraint (pipelines that don't match are excluded)
-   - score:  a soft preference (adds points to matching pipelines)
-   - note:   a short plain-language explanation of what the option rewards,
-             shown on the "Questions" summary page. */
+   - filter: a hard, blocking constraint
+   - score: a soft preference
+   - note: explanation shown on the Questions summary page.
+*/
+
 window.QUESTIONS = [
-  { id:"acq", eyebrow:"Raw data", type:"single",
-    title:"What type of acquisition are your data?",
-    options:[
-      { label:"Single shell only", filter:null,
-        note:"No constraint — all compared pipelines support single-shell data." },
-      { label:"Multi-shell (multiple b-values)", filter:p=>p.multiShell===true,
-        note:"Blocking filter: keeps only pipelines that explicitly support multi-shell acquisitions." },
-      { label:"Compressed sensing / non-Cartesian acquisition", filter:p=>p.compressedSensing===true,
-        note:"Blocking filter: keeps only pipelines that support compressed-sensing / non-Cartesian sampling." },
-      { label:"Not sure", filter:null, note:"No constraint applied." },
-    ]},
-  { id:"tracto", eyebrow:"Analysis goal", type:"single",
-    title:"Do you need to run tractography?",
-    options:[
-      { label:"Yes, tractography is part of the analysis", filter:p=>p.tractography===true,
-        note:"Blocking filter: keeps only pipelines that include a tractography step." },
-      { label:"No, preprocessing only", filter:null, note:"No constraint applied." },
-      { label:"Not sure yet", filter:null, note:"No constraint applied." },
-    ]},
-  { id:"compute", eyebrow:"Environment", type:"single",
-    title:"What compute environment do you have access to?",
-    options:[
-      { label:"My own computer only (local)", score:p=>p.scalability.includes("local") ? 3 : 0,
-        note:"+3 pts if the pipeline's scalability options include local execution." },
-      { label:"HPC cluster (Slurm / SGE / PBS)", score:p=>(p.scalability.includes("hpc")?2:0) + (p.hpcLevel===2?2:0),
-        note:"+2 pts if HPC is supported, +2 more if HPC readiness is rated 'optimized/recommended'." },
-      { label:"Cloud (AWS/GCP/Azure) or a web platform", score:p=>p.scalability.includes("cloud") ? 4 : 0,
-        note:"+4 pts if the pipeline's scalability options include cloud execution." },
-      { label:"Doesn't matter", score:null, note:"No points awarded — this question is skipped in scoring." },
-    ]},
-  { id:"interface", eyebrow:"Day-to-day use", type:"single",
-    title:"What kind of interface do you prefer to work with?",
-    options:[
-      { label:"Terminal / command line, no problem", score:p=>p.interface==="terminal" ? 3 : 0,
-        note:"+3 pts if the pipeline's interface is 'terminal'." },
-      { label:"A graphical interface or a web platform", score:p=>(p.interface==="gui"||p.interface==="gui+terminal"||p.interface==="web") ? 3 : 0,
-        note:"+3 pts if the interface is 'gui', 'gui+terminal', or 'web'." },
-      { label:"Doesn't matter, I just want it to work", score:null, note:"No points awarded — this question is skipped in scoring." },
-    ]},
-  { id:"custom", eyebrow:"Customization", type:"single",
-    title:"How important is it to be able to modify the pipeline (code, parameters)?",
-    options:[
-      { label:"Very important, I want full control", score:p=>p.modifiability * 2 + (p.polyvalent?2:0),
-        note:"+2 pts per modifiability level (1-3), +2 more if the pipeline is versatile/multi-software." },
-      { label:"Somewhat, a few parameters are enough", score:p=>p.modifiability,
-        note:"+1 pt per modifiability level (1-3)." },
-      { label:"Not important, I want a reliable out-of-the-box tool", score:p=>(3-p.modifiability) + (p.containerized?2:0) + (p.htmlReport?1:0),
-        note:"Rewards low modifiability (inverse score), +2 pts if containerized, +1 pt if it produces an HTML report." },
-    ]},
-  { id:"advanced", eyebrow:"Advanced needs", type:"multi",
-    title:"Do you need any specific advanced methods or analyses?",
-    options:[
-      { label:"Advanced models (NODDI, DKI, free-water)", score:p=>(p.noddi?3:0)+(p.dki?3:0)+(p.freewater?3:0),
-        note:"+3 pts each for NODDI, DKI, and free-water elimination support." },
-      { label:"fODF reconstruction / advanced tractography (CSD)", score:p=>p.fodf ? 4 : 0,
-        note:"+4 pts if the pipeline supports fODF / CSD reconstruction." },
-      { label:"Connectomics (connectivity matrices, tractometry)", score:p=>(p.connectivity?3:0)+(p.tractometry?3:0)+(p.biasCorrection?2:0),
-        note:"+3 pts for connectivity matrices, +3 for tractometry, +2 for tractography bias correction." },
-      { label:"Advanced quantitative QC (reports, outlier detection)", score:p=>(p.qcQuant?2:0)+(p.qcBoilerplate?2:0)+(p.qcVisual?2:0)+(p.htmlReport?1:0),
-        note:"+2 pts each for quantitative QC metrics, automated QC boilerplate, and visual QC, +1 for an HTML report." },
-      { label:"Nothing specific", score:null, note:"No points awarded — this option is skipped in scoring." },
-    ]},
-  { id:"maintenance", eyebrow:"Longevity", type:"single",
-    title:"Does the pipeline need to be actively maintained long-term?",
-    options:[
-      { label:"Yes, that's important to me", score:p=>p.activity * 2 + (p.resume?1:0),
-        note:"+2 pts per activity level (1-4), +1 more if it supports resume-on-error." },
-      { label:"Doesn't matter, I mostly care about features", score:null,
-        note:"No points awarded — this question is skipped in scoring." },
-    ]},
+
+  /* =========================================================
+     RAW DATA
+     ========================================================= */
+
+  {
+    id: "acq",
+    eyebrow: "Raw data",
+    type: "single",
+    title: "What type of acquisition are your data?",
+    options: [
+      {
+        label: "Single shell only",
+        filter: null,
+        note: "No constraint — all compared pipelines support single-shell data."
+      },
+      {
+        label: "Multi-shell (multiple b-values)",
+        filter: p => p.multiShell === true,
+        note: "Blocking filter: keeps only pipelines that explicitly support multi-shell acquisitions."
+      },
+      {
+        label: "Compressed sensing / non-Cartesian acquisition",
+        filter: p => p.compressedSensing === true,
+        note: "Blocking filter: keeps only pipelines that support compressed-sensing / non-Cartesian sampling."
+      },
+      {
+        label: "Not sure",
+        filter: null,
+        note: "No constraint applied."
+      }
+    ]
+  },
+
+  {
+    id: "bids",
+    eyebrow: "Raw data",
+    type: "single",
+    title: "How are your data organized?",
+    options: [
+      {
+        label: "BIDS",
+        filter: p => p.bids === true,
+        note: "Blocking filter: keeps only pipelines that explicitly support BIDS datasets."
+      },
+      {
+        label: "NIfTI files, but not BIDS",
+        filter: null,
+        note: "No BIDS constraint applied."
+      },
+      {
+        label: "Not sure",
+        filter: null,
+        note: "No constraint applied."
+      }
+    ]
+  },
+
+  /* =========================================================
+     POPULATION / DATA TYPE
+     ========================================================= */
+
+  {
+    id: "population",
+    eyebrow: "Study population",
+    type: "single",
+    title: "What type of study are these data from?",
+    options: [
+      {
+        label: "Aging / lifespan research",
+        score: p => 
+          (p.wmSegmentationAging ? 3 : 0) + 
+          (p.lesionMaskHandling ? 3 : 0) +
+          (p.partialVolumeCorrection ? 3 : 0),
+        note: "+3 pts for each features or validation relevant to aging/lifespan datasets."
+      },
+      {
+        label: "Clinical / medical data",
+        score: p =>  
+          (p.lesionMaskHandling ? 3 : 0) +
+          (p.partialVolumeCorrection ? 3 : 0) +
+          (p.harmonisation ? 3 : 0),
+        note: "+3 pts for each features or validation relevant to clinical/medical datasets."
+      },
+      {
+        label: "Generic / healthy research dataset",
+        score: null,
+        note: "No constraint applied."
+      },
+      {
+        label: "Not sure",
+        score: null,
+        note: "No population-specific preference is scored."
+      }
+    ]
+  },
+
+  /* =========================================================
+     ANALYSIS GOAL
+     ========================================================= */
+
+  {
+    id: "preprocessing",
+    eyebrow: "Analysis goal",
+    type: "multi",
+    title: "Which preprocessing steps do you want the pipeline to handle?",
+    options: [
+      {
+        label: "Denoising",
+        score: p => p.mppca ? 2 : 0,
+        note: "+2 pts if the pipeline supports diffusion MRI denoising."
+      },
+      {
+        label: "Gibbs ringing correction",
+        score: p => p.gibbs ? 2 : 0,
+        note: "+2 pts if Gibbs ringing correction is supported."
+      },
+      {
+        label: "Motion / eddy-current correction",
+        score: p => p.motion ? 3 : 0,
+        note: "+3 pts if motion and/or eddy-current correction is supported."
+      },
+      {
+        label: "Susceptibility / distortion correction",
+        score: p => p.susceptibilityCorrection || p.topup ? 3 : 0,
+        note: "+3 pts if susceptibility or susceptibility-induced distortion correction is supported."
+      },
+      {
+        label: "Bias-field correction",
+        score: p => p.b1 ? 2 : 0,
+        note: "+2 pts if bias-field correction is supported."
+      },
+      {
+        label: "Registration / spatial normalization",
+        score: p => p.t1wNormalization ? 2 : 0,
+        note: "+2 pts if registration or spatial normalization is supported."
+      },
+      {
+        label: "Brain masking / tissue segmentation",
+        score: p => p.t1wBrainExtraction ? 2 : 0,
+        note: "+2 pts if brain masking or tissue segmentation is supported."
+      },
+      {
+        label: "I want the pipeline to decide the preprocessing",
+        score: null,
+        note: "No specific preprocessing preference is scored."
+      }
+    ]
+  },
+
+  {
+    id: "analysis",
+    eyebrow: "Analysis goal",
+    type: "single",
+    title: "What is the main goal of your analysis?",
+    options: [
+      {
+        label: "Preprocessing only",
+        filter: null,
+        note: "No analysis-specific constraint applied."
+      },
+      {
+        label: "Preprocessing + tractography",
+        filter: p => p.tractography === true,
+        note: "Blocking filter: keeps only pipelines that include tractography."
+      },
+      {
+        label: "Tractometry",
+        filter: p => p.tractometry === true,
+        note: "Blocking filter: keeps only pipelines that support tractometry."
+      },
+      {
+        label: "Connectome / structural connectivity",
+        filter: p => p.connectivity === true,
+        note: "Blocking filter: keeps only pipelines that support connectivity matrices or connectome generation."
+      },
+      {
+        label: "Multiple of these",
+        filter: null,
+        note: "No single analysis constraint is applied."
+      },
+      {
+        label: "Not sure yet",
+        filter: null,
+        note: "No constraint applied."
+      }
+    ]
+  },
+
+  /* =========================================================
+     ENVIRONMENT
+     ========================================================= */
+
+  {
+    id: "dataSize",
+    eyebrow: "Environment",
+    type: "single",
+    title: "How large is your dataset?",
+    options: [
+      {
+        label: "Small — a few subjects",
+        score: p => p.scalability?.includes("local") ? 2 : 0,
+        note: "+2 pts for pipelines supporting convenient local execution."
+      },
+      {
+        label: "Medium — tens of subjects",
+        score: p => p.scalability?.includes("local") || p.scalability?.includes("hpc") ? 2 : 0,
+        note: "+2 pts for pipelines suitable for local or HPC execution."
+      },
+      {
+        label: "Large — hundreds of subjects",
+        score: p => p.scalability?.includes("hpc") ? 3 : 0,
+        note: "+3 pts if HPC execution is supported."
+      },
+      {
+        label: "Very large — thousands of subjects",
+        score: p => p.scalability?.includes("hpc") || p.scalability?.includes("cloud") ? 4 : 0,
+        note: "+4 pts for HPC or cloud scalability."
+      },
+      {
+        label: "Not sure yet",
+        score: null,
+        note: "No points awarded."
+      }
+    ]
+  },
+
+  {
+    id: "gpu",
+    eyebrow: "Environment",
+    type: "single",
+    title: "Do you have access to a GPU?",
+    options: [
+      {
+        label: "Yes",
+        score: p => p.gpu === true ? 4 : 0,
+        note: "+4 pts if GPU acceleration is supported."
+      },
+      {
+        label: "No GPU",
+        score: null,
+        note: "No GPU preference is scored."
+      },
+      {
+        label: "Not sure",
+        score: null,
+        note: "No constraint applied."
+      }
+    ]
+  },
+  
+  /* =========================================================
+     INTERFACE
+     ========================================================= */
+
+  {
+    id: "interface",
+    eyebrow: "Day-to-day use",
+    type: "single",
+    title: "What kind of interface do you prefer?",
+    options: [
+      {
+        label: "Terminal / command line",
+        score: p => p.interface === "terminal" ? 3 : 0,
+        note: "+3 pts if the pipeline is designed for terminal/CLI use."
+      },
+      {
+        label: "Graphical interface",
+        score: p =>
+          (p.interface === "gui" ||
+           p.interface === "gui+terminal" ||
+           p.interface === "web") ? 3 : 0,
+        note: "+3 pts if a graphical or web interface is available."
+      },
+      {
+        label: "Web platform",
+        score: p => p.interface === "web" ? 4 : 0,
+        note: "+4 pts if the pipeline is available through a web platform."
+      },
+      {
+        label: "Doesn't matter",
+        score: null,
+        note: "No points awarded."
+      }
+    ]
+  },
+
+  {
+    id: "tutorial",
+    eyebrow: "Day-to-day use",
+    type: "single",
+    title: "How much guidance or tutorial support do you need?",
+    options: [
+      {
+        label: "I want a detailed tutorial / beginner-friendly documentation",
+        score: p => p.tutorial=== true ? 4 : 0,
+        note: "+4 pts for pipelines with strong tutorials or beginner-oriented documentation."
+      },
+      {
+        label: "Standard documentation is enough",
+        score: p => p.documentation >= 3 ? 2 : 0,
+        note: "+2 pts if good documentation is available."
+      },
+      {
+        label: "I am comfortable figuring it out myself",
+        score: null,
+        note: "No documentation preference is scored."
+      }
+    ]
+  },
+
+  /* =========================================================
+     QUALITY CONTROL
+     ========================================================= */
+
+  {
+    id: "qc",
+    eyebrow: "Quality control",
+    type: "single",
+    title: "How much quality control do you need?",
+    options: [
+      {
+        label: "Basic QC",
+        score: p => p.qcVisual || p.qcBoilerplate ? 2 : 0,
+        note: "+2 pts for pipelines providing basic visual or automated QC."
+      },
+      {
+        label: "Automated QC with quantitative metrics",
+        score: p =>
+          (p.qcQuant ? 3 : 0) +
+          (p.qcBoilerplate ? 2 : 0),
+        note: "+3 pts for quantitative QC and +2 for automated QC."
+      },
+      {
+        label: "Extensive QC and reports",
+        score: p =>
+          (p.qcQuant ? 2 : 0) +
+          (p.qcBoilerplate ? 2 : 0) +
+          (p.qcVisual ? 2 : 0) +
+          (p.outlierDetection ? 2 : 0) +
+          (p.htmlReport ? 2 : 0),
+        note: "+2 pts each for quantitative QC, automated QC, visual QC, and HTML reports."
+      },
+      {
+        label: "QC is not a major requirement",
+        score: null,
+        note: "No QC preference is scored."
+      }
+    ]
+  },
+
+  /* =========================================================
+     ADVANCED NEEDS
+     ========================================================= */
+
+  {
+    id: "advanced",
+    eyebrow: "Advanced needs",
+    type: "multi",
+    title: "Do you need any specific advanced methods or analyses?",
+    options: [
+      {
+        label: "Advanced diffusion models (NODDI, DKI, free-water)",
+        score: p =>
+          (p.noddi ? 3 : 0) +
+          (p.dki ? 3 : 0) +
+          (p.freewater ? 3 : 0),
+        note: "+3 pts each for NODDI, DKI, and free-water support."
+      },
+      {
+        label: "fODF reconstruction / CSD",
+        score: p => p.fodf ? 4 : 0,
+        note: "+4 pts if fODF / CSD reconstruction is supported."
+      },
+      {
+        label: "Fieldmapless distortion correction",
+        score: p => p.fieldmapless ? 4 : 0,
+        note: "+4 pts if advanced tractography methods are supported."
+      },
+      {
+        label: "Resume on error",
+        score: p => p.resume ? 4 : 0,
+        note: "+4 pts if connectivity / connectome generation is supported."
+      },
+      {
+        label: "Multi-session / longitudinal support",
+        score: p => p.longitudinalSupport ? 4 : 0,
+        note: "+4 pts if tractometry is supported."
+      },
+      {
+        label: "Nothing specific",
+        score: null,
+        note: "No points awarded."
+      }
+    ]
+  }
 ];
+
