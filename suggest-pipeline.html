@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" type="image/png" href="image/flavicon.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diffusion Compass — Suggest a pipeline</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="xlsx-loader.js"></script>
 <script>
 (function(){
   try{
@@ -25,9 +26,7 @@
     <div class="top-right">
 
       <div class="theme-tag mono">dMRI pipeline finder</div>
-      <a href="https://github.com/DifussionCompass/DifussionCompass" target="_blank" rel="noopener noreferrer">
-        <img src="image/logo_github.png" alt="Description" style="height:36px; width:auto; display:block;">
-      </a>
+
       <button class="theme-toggle" id="themeToggle" aria-label="Toggle light / dark theme" title="Toggle light / dark theme">
       <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -42,18 +41,20 @@
     <a class="tab-btn" href="suggest-criterion.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>Suggest a criterion / question</span></a>
   </div>
 
+  <div class="q-eyebrow">Contribute</div>
   <h2 class="q-title" style="margin-bottom:6px;">Suggest a pipeline</h2>
-  <p class="lede" style="margin-bottom:22px;">Fill in what you know — it doesn't have to be complete. Submitting opens a pre-filled GitHub Issue in this project's repository so a maintainer can review it and add it to the right Excel file.</p>
+  <p class="lede" style="margin-bottom:22px;">Pick a category and the form below rebuilds itself from that category's own comparison spreadsheet, so you're filling in exactly the criteria used to rank pipelines there. Fill in what you know — it doesn't have to be complete. Submitting opens a pre-filled GitHub Issue in this project's repository so a maintainer can review it and add it to the right Excel file.</p>
 
   <form id="pipelineForm">
     <div class="field-row">
       <div class="field">
         <label for="pf-category">Category</label>
         <select id="pf-category">
-          <option value="Adult human">Adult human</option>
-          <option value="Pediatric human">Pediatric human</option>
-          <option value="Mouse">Mouse</option>
-          <option value="Monkey">Monkey</option>
+          <option value="">— Select a category —</option>
+          <option value="adult">Adult human</option>
+          <option value="pediatric">Pediatric human</option>
+          <option value="rodent">Rodent</option>
+          <option value="monkey">Monkey</option>
         </select>
       </div>
       <div class="field">
@@ -72,132 +73,15 @@
       <textarea id="pf-desc" placeholder="What does this pipeline do, what makes it different?"></textarea>
     </div>
 
-    <div class="field" id="pf-extra-wrap" style="display:none;">
-      <label id="pf-extra-label" for="pf-extra">Category-specific info</label>
-      <input type="text" id="pf-extra">
-      <div class="hint" id="pf-extra-hint"></div>
-    </div>
-
-    <details class="form-section" open>
-      <summary>Environment &amp; software</summary>
-      <div class="form-section-body">
-        <div class="field-row">
-          <div class="field">
-            <label for="pf-interface">Interface</label>
-            <select id="pf-interface">
-              <option value="terminal">terminal</option>
-              <option value="gui">gui</option>
-              <option value="web">web</option>
-              <option value="gui+terminal">gui+terminal</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="pf-modifiability">Modifiability</label>
-            <select id="pf-modifiability">
-              <option value="1">1 — low</option>
-              <option value="2" selected>2 — medium</option>
-              <option value="3">3 — high</option>
-            </select>
-          </div>
-        </div>
-        <div class="field">
-          <label>Scalability</label>
-          <div class="checkbox-grid">
-            <label class="checkbox-item"><input type="checkbox" data-field="scal-local"> Local</label>
-            <label class="checkbox-item"><input type="checkbox" data-field="scal-hpc"> HPC</label>
-            <label class="checkbox-item"><input type="checkbox" data-field="scal-cloud"> Cloud</label>
-          </div>
-        </div>
-        <div class="checkbox-grid">
-          <label class="checkbox-item"><input type="checkbox" data-field="gpu"> GPU support</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="parallel"> Parallelization</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="polyvalent"> Versatile / multi-software</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="resume"> Resume on error</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="bids"> BIDS App</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="containerized"> Containerized</label>
-        </div>
-      </div>
-    </details>
-
-    <details class="form-section">
-      <summary>Preprocessing steps</summary>
-      <div class="form-section-body">
-        <div class="checkbox-grid">
-          <label class="checkbox-item"><input type="checkbox" data-field="gradientCheck"> Gradient direction check</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="mppca"> MP-PCA denoising</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="gibbs"> Gibbs unringing</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="b1"> B1 bias field correction</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="motion"> Head motion correction</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="fieldmapless"> Fieldmapless distortion correction</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="htmlReport"> HTML report</label>
-        </div>
-      </div>
-    </details>
-
-    <details class="form-section">
-      <summary>Tractography &amp; models</summary>
-      <div class="form-section-body">
-        <div class="checkbox-grid">
-          <label class="checkbox-item"><input type="checkbox" data-field="tractography"> Tractography step</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="dki"> DKI model</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="noddi"> NODDI model</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="freewater"> Free-water elimination</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="fodf"> fODF / CSD reconstruction</label>
-        </div>
-      </div>
-    </details>
-
-    <details class="form-section">
-      <summary>QC &amp; connectomics</summary>
-      <div class="form-section-body">
-        <div class="checkbox-grid">
-          <label class="checkbox-item"><input type="checkbox" data-field="qcBoilerplate"> QC automated boilerplate</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="qcQuant"> QC quantitative metrics</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="qcVisual"> QC interactive visualization</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="connectivity"> Structural connectivity matrix</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="biasCorrection"> Tractography bias correction</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="tractometry"> Tractometry</label>
-        </div>
-      </div>
-    </details>
-
-    <details class="form-section">
-      <summary>Data support &amp; reproducibility</summary>
-      <div class="form-section-body">
-        <div class="checkbox-grid">
-          <label class="checkbox-item"><input type="checkbox" data-field="multiShell"> Multi shell</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="cartesian"> Cartesian acquisition</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="compressedSensing"> Compressed sensing</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="testRetest"> Test-retest reproducibility documented</label>
-          <label class="checkbox-item"><input type="checkbox" data-field="signalDrift"> Signal drift correction</label>
-        </div>
-        <div class="field-row" style="margin-top:12px;">
-          <div class="field">
-            <label for="pf-hpclevel">HPC production readiness</label>
-            <select id="pf-hpclevel">
-              <option value="1">1 — supported</option>
-              <option value="2">2 — optimized/recommended</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="pf-activity">Maintenance activity</label>
-            <select id="pf-activity">
-              <option value="1">1 — nearly frozen</option>
-              <option value="2">2 — slow</option>
-              <option value="3" selected>3 — active</option>
-              <option value="4">4 — very active</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </details>
+    <div class="load-msg" id="schemaMsg">Select a category above to load its criteria.</div>
+    <div id="dynamicFields"></div>
 
     <div class="field">
       <label for="pf-notes">Anything else? (optional)</label>
       <textarea id="pf-notes" placeholder="Any other criteria, caveats, or context worth mentioning."></textarea>
     </div>
 
-    <button type="submit" class="btn-primary">Open GitHub issue →</button>
+    <button type="submit" class="btn-primary" id="pf-submit" disabled>Open GitHub issue →</button>
     <div class="submit-msg" id="pf-msg"></div>
   </form>
 
@@ -206,66 +90,189 @@
   </footer>
 </div>
 
+<style>
+  .dyn-section .form-section-body .checkbox-grid{ margin-bottom: 14px; }
+  .dyn-section .form-section-body .checkbox-grid:last-child{ margin-bottom: 0; }
+  .dyn-field-label{
+    display:block; font-family:'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .dyn-field{ margin-bottom: 14px; }
+  .dyn-field:last-child{ margin-bottom: 0; }
+  .dyn-field input[type="text"], .dyn-field input[type="number"]{
+    width:100%; background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    color: var(--text); font-family:'IBM Plex Sans', sans-serif; font-size: 14px; padding: 9px 11px;
+  }
+  .dyn-field input:focus{ outline: 2px solid var(--z-axis); outline-offset: 1px; }
+</style>
+
 <script>
 const GITHUB_REPO_URL = "https://github.com/DifussionCompass/DifussionCompass";
 
-const extraByCategory = {
-  "Adult human": null,
-  "Pediatric human": { label: "Supported / validated age range", hint: "e.g. \"neonates, infants\" or \"children, adolescents\" — maps to the ageRange criterion", placeholder: "children, adolescents" },
-  "Mouse": { label: "Supported reference atlas", hint: "e.g. \"Allen Mouse Brain Atlas\" or \"Waxholm Space\" — maps to the atlasSupport criterion", placeholder: "Allen Mouse Brain Atlas" },
-  "Monkey": { label: "Supported reference atlas", hint: "e.g. \"NMT\", \"D99\", \"INIA19\" — maps to the atlasSupport criterion", placeholder: "NMT" },
+// Self-contained category → xlsx mapping (no external categories.js needed).
+// If this project later adds a shared categories.js with the same category
+// keys, this map can be dropped in favor of it — but nothing here requires it.
+const CATEGORY_INFO = {
+  adult:      { label: "Adult human",     xlsx: "data/adult.xlsx" },
+  pediatric:  { label: "Pediatric human", xlsx: "data/pediatric.xlsx" },
+  rodent:     { label: "Rodent",          xlsx: "data/rodent.xlsx" },
+  monkey:     { label: "Monkey",          xlsx: "data/monkey.xlsx" },
 };
 
-function updateExtraField(){
-  const cat = document.getElementById('pf-category').value;
-  const wrap = document.getElementById('pf-extra-wrap');
-  const info = extraByCategory[cat];
-  if(info){
-    wrap.style.display = 'block';
-    document.getElementById('pf-extra-label').textContent = info.label;
-    document.getElementById('pf-extra-hint').textContent = info.hint;
-    document.getElementById('pf-extra').placeholder = info.placeholder;
-  } else {
-    wrap.style.display = 'none';
+const catSelect = document.getElementById('pf-category');
+const schemaMsg = document.getElementById('schemaMsg');
+const dynWrap = document.getElementById('dynamicFields');
+const submitBtn = document.getElementById('pf-submit');
+
+let currentSchema = [];   // the field list built from the loaded xlsx
+let currentCat = "";
+
+function getCategoryFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  const cat = params.get('cat');
+  return (cat && CATEGORY_INFO[cat]) ? cat : null;
+}
+
+// Preselect from ?cat= if the page was reached from a category context.
+const urlCat = getCategoryFromUrl();
+if(urlCat) catSelect.value = urlCat;
+
+function fieldInputId(f){ return 'df-' + f.id; }
+
+function renderSchema(schema){
+  // group fields in the order their section first appears
+  const sections = [];
+  const bySection = new Map();
+  schema.forEach(f=>{
+    if(!bySection.has(f.section)){ bySection.set(f.section, []); sections.push(f.section); }
+    bySection.get(f.section).push(f);
+  });
+
+  let html = '';
+  sections.forEach((sec, i)=>{
+    html += `<details class="form-section dyn-section" ${i===0 ? 'open' : ''}><summary>${sec}</summary><div class="form-section-body">`;
+
+    const fields = bySection.get(sec);
+    const boolFields = fields.filter(f=>f.type==='bool');
+    const otherFields = fields.filter(f=>f.type!=='bool');
+
+    if(boolFields.length){
+      html += '<div class="checkbox-grid">';
+      boolFields.forEach(f=>{
+        html += `<label class="checkbox-item"><input type="checkbox" id="${fieldInputId(f)}"> ${f.label}</label>`;
+      });
+      html += '</div>';
+    }
+
+    otherFields.forEach(f=>{
+      html += '<div class="dyn-field">';
+      if(f.type === 'number'){
+        // These are always small rating scales (1 to 4) in the source
+        // spreadsheets (modifiability, hpcLevel, activity, documentationLevel)
+        // — use a dropdown instead of a free-text number field so submissions
+        // stay within the scale everyone else's answers were rated on.
+        const NUM_MIN = 1, NUM_MAX = 4;
+        html += `<label class="dyn-field-label" for="${fieldInputId(f)}">${f.label}</label><select id="${fieldInputId(f)}">`;
+        html += `<option value="">— not specified —</option>`;
+        for(let n = NUM_MIN; n <= NUM_MAX; n++){
+          const sel = (f.example && parseInt(f.example, 10) === n) ? ' selected' : '';
+          html += `<option value="${n}"${sel}>${n}</option>`;
+        }
+        html += '</select>';
+      } else if(f.type === 'list'){
+        html += `<label class="dyn-field-label">${f.label}</label><div class="checkbox-grid">`;
+        f.options.forEach(opt=>{
+          html += `<label class="checkbox-item"><input type="checkbox" data-list-id="${f.id}" value="${opt}"> ${opt}</label>`;
+        });
+        html += '</div>';
+      } else {
+        html += `<label class="dyn-field-label" for="${fieldInputId(f)}">${f.label}</label>
+                  <input type="text" id="${fieldInputId(f)}" placeholder="${f.example ? 'e.g. ' + f.example : ''}">`;
+      }
+      html += '</div>';
+    });
+
+    html += '</div></details>';
+  });
+
+  dynWrap.innerHTML = html;
+}
+
+function readSchemaValues(){
+  // Returns an array of { id, label, value } for every field in the current schema.
+  return currentSchema.map(f=>{
+    let value = '';
+    if(f.type === 'bool'){
+      value = document.getElementById(fieldInputId(f)).checked ? 'yes' : 'no';
+    } else if(f.type === 'list'){
+      const checked = Array.from(document.querySelectorAll(`[data-list-id="${f.id}"]:checked`)).map(el=>el.value);
+      value = checked.join(',');
+    } else {
+      value = document.getElementById(fieldInputId(f)).value.trim();
+    }
+    return { id: f.id, label: f.label, value };
+  });
+}
+
+async function loadCategory(cat){
+  currentCat = cat;
+  currentSchema = [];
+  dynWrap.innerHTML = '';
+  submitBtn.disabled = true;
+
+  if(!cat){
+    schemaMsg.className = 'load-msg';
+    schemaMsg.textContent = 'Select a category above to load its criteria.';
+    return;
+  }
+
+  try{
+    const meta = CATEGORY_INFO[cat];
+    if(!meta || !meta.xlsx){
+      throw new Error(`Unknown category "${cat}" (no entry in CATEGORY_INFO).`);
+    }
+
+    schemaMsg.className = 'load-msg';
+    schemaMsg.innerHTML = '<span class="spinner"></span>Loading criteria from ' + meta.xlsx + '…';
+
+    const schema = await loadCriteriaSchema(meta.xlsx);
+    currentSchema = schema;
+    renderSchema(schema);
+    schemaMsg.textContent = `✓ ${schema.length} criteria loaded from ${meta.xlsx} — fill in as many as you can.`;
+    submitBtn.disabled = false;
+  }catch(err){
+    schemaMsg.className = 'load-msg err';
+    schemaMsg.textContent = `Error loading criteria for "${cat}": ${err.message}`;
+    console.error('suggest-pipeline loadCategory error:', err);
   }
 }
-document.getElementById('pf-category').addEventListener('change', updateExtraField);
-updateExtraField();
+
+catSelect.addEventListener('change', ()=> loadCategory(catSelect.value));
+if(urlCat) loadCategory(urlCat);
 
 document.getElementById('pipelineForm').addEventListener('submit', (e)=>{
   e.preventDefault();
-  const category = document.getElementById('pf-category').value;
+  if(!currentCat){
+    schemaMsg.className = 'load-msg err';
+    schemaMsg.textContent = 'Please select a category first.';
+    return;
+  }
+
+  const category = CATEGORY_INFO[currentCat].label;
   const name = document.getElementById('pf-name').value.trim();
   const link = document.getElementById('pf-link').value.trim();
   const desc = document.getElementById('pf-desc').value.trim();
   const notes = document.getElementById('pf-notes').value.trim();
-  const extra = document.getElementById('pf-extra').value.trim();
-
-  const scal = [];
-  if(document.querySelector('[data-field="scal-local"]').checked) scal.push('local');
-  if(document.querySelector('[data-field="scal-hpc"]').checked) scal.push('hpc');
-  if(document.querySelector('[data-field="scal-cloud"]').checked) scal.push('cloud');
-
-  const boolFields = ["gpu","parallel","polyvalent","resume","bids","containerized","gradientCheck","mppca","gibbs",
-    "b1","motion","fieldmapless","htmlReport","tractography","dki","noddi","freewater","fodf","qcBoilerplate",
-    "qcQuant","qcVisual","connectivity","biasCorrection","tractometry","multiShell","cartesian","compressedSensing",
-    "testRetest","signalDrift"];
+  const values = readSchemaValues();
 
   let body = `**Category:** ${category}\n**Pipeline name:** ${name}\n**Link:** ${link}\n`;
   if(desc) body += `**Description:** ${desc}\n`;
-  if(extra) body += `**${extraByCategory[category] ? extraByCategory[category].label : 'Category-specific info'}:** ${extra}\n`;
-  body += `\n| criterion_id | value |\n|---|---|\n`;
-  body += `| interface | ${document.getElementById('pf-interface').value} |\n`;
-  body += `| modifiability | ${document.getElementById('pf-modifiability').value} |\n`;
-  body += `| hpcLevel | ${document.getElementById('pf-hpclevel').value} |\n`;
-  body += `| activity | ${document.getElementById('pf-activity').value} |\n`;
-  body += `| scalability | ${scal.join(',') || '(none selected)'} |\n`;
-  boolFields.forEach(f=>{
-    const checked = document.querySelector(`[data-field="${f}"]`).checked;
-    body += `| ${f} | ${checked ? 'yes' : 'no'} |\n`;
+  body += `\n| criterion_id | criterion | value |\n|---|---|---|\n`;
+  values.forEach(v=>{
+    body += `| ${v.id} | ${v.label} | ${v.value || '(not specified)'} |\n`;
   });
   if(notes) body += `\n**Additional notes:**\n${notes}\n`;
-  body += `\n---\n*Submitted via the "Suggest a pipeline" form.*`;
+  body += `\n---\n*Submitted via the "Suggest a pipeline" form — fields generated from ${CATEGORY_INFO[currentCat].xlsx}.*`;
 
   const title = `[Pipeline suggestion] ${name} (${category})`;
   const url = `${GITHUB_REPO_URL}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
