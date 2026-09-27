@@ -95,7 +95,7 @@ if(!cat){
   loadMsg.innerHTML = '<span class="spinner"></span>Loading ' + meta.questionsFile + '…';
 
   const script = document.createElement('script');
-  script.src = meta.questionsFile;
+  script.src = meta.questionsFile + '?t=' + Date.now();
   script.onload = () => {
     const QUESTIONS = window.QUESTIONS || [];
     loadMsg.textContent = '';

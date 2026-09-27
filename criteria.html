@@ -144,8 +144,8 @@ const UNCOUNTED_IDS = new Set(['website','link','url','github','repo','repositor
 const cat    = getCategoryFromUrl();
 const subNav = document.getElementById('subNav');
 
-const BOOL_TRUE_DISPLAY  = new Set(["yes","true","1","✔","x","oui","vrai"]);
-const BOOL_FALSE_DISPLAY = new Set(["no","false","0","✘","non","faux",""]);
+const BOOL_TRUE_DISPLAY  = new Set(["yes","true","✔","x","oui","vrai"]);
+const BOOL_FALSE_DISPLAY = new Set(["no","false","✘","non","faux",""]);
 
 function renderCell(raw){
   const v   = String(raw || "").trim();

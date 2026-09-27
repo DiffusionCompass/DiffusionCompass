@@ -20,7 +20,7 @@ function parseNum(v, fallback){
 
 const BOOL_FIELDS = ["gpu","parallel","polyvalent","resume","bids","gradientCheck","mppca","gibbs","b1","motion",
   "fieldmapless","htmlReport","containerized","tractography","dki","noddi","freewater","fodf","qcBoilerplate",
-  "qcQuant","qcVisual","connectivity","biasCorrection","tractometry","multiShell","cartesian","compressedSensing",
+  "qcQuant","qcVisual","connectivity","filtering","atlasSupport","tractometry","wmAtlas","multiShell","cartesian","compressedSensing",
   "testRetest","signalDrift","tutorial","outlierDetection","wmSegmentationAging","lesionMaskHandling",
   "partialVolumeCorrection","agingAtlas","agingCohortValidation"];
 const NUM_FIELDS = { modifiability:1, hpcLevel:1, activity:1 };
@@ -71,7 +71,10 @@ async function loadPipelinesFromXlsx(url){
   const knownIds = new Set(["desc","interface","scalability", ...BOOL_FIELDS, ...Object.keys(NUM_FIELDS), ...WEBSITE_ID_ALIASES]);
 
   return pipelineCols.map(({name, col})=>{
-    const get = (id)=> (byId[id] ? byId[id][col] : "");
+    const get = (id)=> {
+      const row = byId[String(id).toLowerCase()];
+      return row ? row[col] : "";
+    };
     const p = { id: name.toLowerCase().replace(/[^a-z0-9]+/g,"-"), name };
     p.desc = String(get("desc") || "").trim();
     p.interface = String(get("interface") || "").trim().toLowerCase();
