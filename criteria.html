@@ -42,7 +42,6 @@
   <h2 class="q-title" style="margin-bottom:6px;" id="pageTitle">Criteria</h2>
 
   <div class="load-msg" id="loadMsg"></div>
-  <div class="table-scroll-top" id="scrollTop"><div id="scrollTopInner"></div></div>
   <div class="table-scroll" id="tableWrap"></div>
 
   <footer class="foot">
@@ -53,9 +52,12 @@
 <style>
   .app-wide{ max-width: min(4vw, 1600px); }
 
-  .table-scroll-top{ overflow-x:auto; overflow-y:hidden; height:16px; margin-bottom:4px; }
-  .table-scroll-top > div{ height:1px; }
-  .table-scroll{ overflow-x:auto; border: 1px solid var(--line); border-radius: var(--radius); }
+  .table-scroll{
+    overflow: auto;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    height: calc(100vh - 200px);
+  }
 
   table.criteria-table{ border-collapse: collapse; width:100%; font-size: 13px; }
 
@@ -78,6 +80,7 @@
     position: sticky;
     top: 0;
     z-index: 2;
+    box-shadow: 0 1px 0 var(--line);
   }
   table.criteria-table thead th:first-child{ left:0; z-index:3; }
 
@@ -92,6 +95,10 @@
     box-shadow: 2px 0 0 var(--line);
   }
 
+  table.criteria-table thead th:first-child{
+    box-shadow: 2px 0 0 var(--line), 0 1px 0 var(--line);
+  }
+
   /* ── Alternating row backgrounds ── */
   table.criteria-table tbody tr:nth-child(odd)  td             { background: var(--surface); }
   table.criteria-table tbody tr:nth-child(odd)  td:first-child { background: var(--surface); }
@@ -103,27 +110,18 @@
   .val-no   { color: var(--muted); }
   .val-text { font-family: 'IBM Plex Mono', monospace; font-size: 12px; white-space: normal; max-width: 34ch; }
 
-  /* ── Section-header rows ──────────────────────────────────────────────
-     FIX: the <td> with colspan must NOT be position:sticky — that broke
-     the row when the table was scrolled horizontally (the cell stayed
-     pinned to the left and its text appeared "unfixed / floating").
-     Instead we keep the <td> fully static so it spans the whole row,
-     and make the inner <span class="section-label"> sticky so the text
-     label stays readable while the user scrolls right.
-  ─────────────────────────────────────────────────────────────────────── */
+  /* ── Section-header rows ── */
   table.criteria-table tr.section-header td{
     background: rgba(76, 140, 224, 0.12) !important;
     padding: 10px 12px 6px;
     border-top: 2px solid rgba(76, 140, 224, 0.3);
     border-bottom: 1px solid rgba(76, 140, 224, 0.2);
-    /* Reset sticky that was applied via the td:first-child rule above */
     position: static !important;
     box-shadow: none !important;
-    font-weight: normal; /* reset bold from first-child rule */
+    font-weight: normal;
   }
 
   table.criteria-table tr.section-header .section-label{
-    /* The label itself sticks to the left viewport edge while scrolling */
     position: sticky;
     left: 12px;
     display: inline-block;
@@ -173,8 +171,6 @@ if(!cat){
 
   const loadMsg        = document.getElementById('loadMsg');
   const wrap           = document.getElementById('tableWrap');
-  const scrollTop      = document.getElementById('scrollTop');
-  const scrollTopInner = document.getElementById('scrollTopInner');
 
   loadCriteriaGrid(xlsxUrl).then(({ pipelineNames, rows }) => {
     rows = rows.filter(r => !EXCLUDED_IDS.has(r.id.toLowerCase()));
@@ -206,20 +202,14 @@ if(!cat){
     html += '</tbody></table>';
     wrap.innerHTML = html;
 
-    /* Sync the phantom top scrollbar with the real table */
     const table = wrap.querySelector('table');
-    scrollTopInner.style.width = table.scrollWidth + 'px';
-    let syncing = false;
-    scrollTop.addEventListener('scroll', () => {
-      if(syncing) return; syncing = true;
-      wrap.scrollLeft = scrollTop.scrollLeft;
-      syncing = false;
-    });
-    wrap.addEventListener('scroll', () => {
-      if(syncing) return; syncing = true;
-      scrollTop.scrollLeft = wrap.scrollLeft;
-      syncing = false;
-    });
+
+    function fitTable(){ 
+      const absTop = wrap.getBoundingClientRect().top + window.scrollY; 
+      const available = window.innerHeight - absTop; 
+      wrap.style.height = Math.max(500, available) + 'px'; }
+    fitTable();
+    window.addEventListener('resize', fitTable);
 
   }).catch(err => {
     loadMsg.className = 'load-msg err';
