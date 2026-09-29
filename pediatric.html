@@ -68,7 +68,7 @@
 
   <section class="screen active intro" id="screen-intro">
     <h1>Which pipeline fits <span class="accent">your</span> pediatric diffusion data?</h1>
-    <p class="lede">Answer a series of questions about your cohort, data and analysis needs. ⚠️ This category currently ships with placeholder/example data — replace <code class="mono">data/pediatric.xlsx</code> with your real comparison table when it's ready.</p>
+    <p class="lede">Answer a series of questions about your cohort, data and analysis needs.</p>
 
     <div class="facts">
       <div class="fact"><b id="factCount">—</b><span>pipelines compared</span></div>
@@ -112,7 +112,7 @@
 <script>
 window.DATA_FILE = "data/pediatric.xlsx";
 </script>
-<script src="pediatric-questions.js"></script>
+<script>document.write('<script src="pediatric-questions.js?t='+Date.now()+'"><\/script>');</script>
 <script src="engine.js"></script>
 <script>
 (async function(){

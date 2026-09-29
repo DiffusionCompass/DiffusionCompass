@@ -115,7 +115,7 @@ window.DATA_FILE = "data/adult.xlsx";
 
 // Questions for this category are defined in adult-questions.js
 </script>
-<script src="adult-questions.js"></script>
+<script>document.write('<script src="adult-questions.js?t='+Date.now()+'"><\/script>');</script>
 <script src="engine.js"></script>
 <script>
 (async function(){
