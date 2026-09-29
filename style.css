@@ -7,10 +7,10 @@
   --line: #2A2F3D;
   --text: #ECEAE3;
   --muted: #8B93A7;
-  --x-axis: #E8564A; /* left-right */
-  --y-axis: #63BF7C; /* anterior-posterior */
-  --z-axis: #4C8CE0; /* superior-inferior */
-  --gold: #E0B24C;
+  --x-axis: #BB271A; /* left-right */
+  --y-axis: #9DC384; /* anterior-posterior */
+  --z-axis: #789DE5; /* superior-inferior */
+  --gold: #FBE6A4;
   --radius: 10px;
   --grid-line: rgba(255,255,255,0.02);
 }
@@ -22,10 +22,10 @@
   --line: #DBD6C9;
   --text: #14161C;
   --muted: #6B7280;
-  --x-axis: #C8412F;
-  --y-axis: #2E8F4A;
-  --z-axis: #2665BF;
-  --gold: #A8781F;
+  --x-axis: #8D1B12;
+  --y-axis: #48752C;
+  --z-axis: #2854C4;
+  --gold: #DA954A;
   --grid-line: rgba(20,22,28,0.035);
 }
 
