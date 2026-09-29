@@ -21,7 +21,8 @@ function parseNum(v, fallback){
 const BOOL_FIELDS = ["gpu","parallel","polyvalent","resume","bids","gradientCheck","mppca","gibbs","b1","motion",
   "fieldmapless","htmlReport","containerized","tractography","dki","noddi","freewater","fodf","qcBoilerplate",
   "qcQuant","qcVisual","connectivity","biasCorrection","tractometry","multiShell","cartesian","compressedSensing",
-  "testRetest","signalDrift"];
+  "testRetest","signalDrift","tutorial","outlierDetection","wmSegmentationAging","lesionMaskHandling",
+  "partialVolumeCorrection","agingAtlas","agingCohortValidation"];
 const NUM_FIELDS = { modifiability:1, hpcLevel:1, activity:1 };
 
 async function fetchSheetGrid(url){
@@ -98,4 +99,60 @@ async function loadCriteriaGrid(url){
     values: pipelineCols.map(({col}) => String(row[col] ?? "").trim()),
   }));
   return { pipelineNames, rows };
+}
+
+/* Returns a dynamic field list for suggest-pipeline.html, built straight
+   from a category's own Excel file (no hardcoded field list): for every
+   non-section data row, infers "bool" / "number" / "list" / "text" from
+   the values already entered for existing pipelines, and groups fields
+   under the section header they fall under. */
+async function loadCriteriaSchema(url){
+  const { pipelineCols, dataRows } = await fetchSheetGrid(url);
+  const boolFalse = new Set(["no","false","0","✘","non","faux"]);
+  const SKIP_IDS = new Set(["desc", ...WEBSITE_ID_ALIASES]);
+
+  const fields = [];
+  let currentSection = "General";
+
+  dataRows.forEach(({ id, label, row, isSection })=>{
+    if(isSection){
+      currentSection = id.replace(/_/g, " ");
+      return;
+    }
+    if(SKIP_IDS.has(id.toLowerCase())) return;
+
+    const values = pipelineCols
+      .map(({col}) => String(row[col] ?? "").trim())
+      .filter(Boolean);
+
+    const lower = values.map(v => v.toLowerCase());
+    let type = "text";
+    let options = null;
+
+    if(lower.length && lower.every(v => BOOL_TRUE.has(v) || boolFalse.has(v))){
+      type = "bool";
+    } else if(lower.length && lower.every(v => v !== "" && isFinite(parseFloat(v)) && /^-?\d+(\.\d+)?$/.test(v))){
+      type = "number";
+    } else if(
+      lower.some(v => v.includes(",") || v.includes(";")) &&
+      !lower.some(v => /^(yes|no|true|false)\b[\s,:;-]/.test(v)) &&
+      lower.every(v => v.split(/[,;]/).every(t => { t = t.trim(); return t.length > 0 && t.length <= 24; }))
+    ){
+      type = "list";
+      const tokenSet = new Set();
+      lower.forEach(v => v.split(/[,;]/).forEach(t=>{ t = t.trim(); if(t) tokenSet.add(t); }));
+      options = Array.from(tokenSet).sort();
+    }
+
+    fields.push({
+      id,
+      label: label || id,
+      section: currentSection,
+      type,
+      options,
+      example: values[0] || "",
+    });
+  });
+
+  return fields;
 }
