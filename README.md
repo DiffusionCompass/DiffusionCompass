@@ -1,8 +1,8 @@
 # Diffusion Compass
 
-An interactive tool that helps researchers figure out which **dMRI (diffusion MRI) preprocessing pipeline** best fits their data — by answering a short quiz about their study.
+An interactive tool that helps researchers figure out which **dMRI (diffusion MRI) preprocessing pipeline** best fits their data, by answering a short quiz about their study.
 
-No installation needed to use it — it's a website.
+No installation needed to use it. It's a website!
 
 ---
 
@@ -24,7 +24,7 @@ The site works in both light and dark mode (toggle in the header).
 
 ## Contributing
 
-Know a pipeline that's missing, or think a comparison criterion should be added? Use the **"Suggest a pipeline"** or **"Suggest a criterion / question"** tabs — they open a pre-filled GitHub Issue so the team can review it.
+Know a pipeline that's missing, or think a comparison criterion should be added? Use the **"Suggest a pipeline"** or **"Suggest a criterion / question"** tabs. They open a pre-filled GitHub Issue so the team can review it.
 
 ---
 
@@ -33,11 +33,11 @@ Know a pipeline that's missing, or think a comparison criterion should be added?
 If you'd like to preview the site on your own computer:
 
 1. Download or clone this repository.
-2. Opening `index.html` by double-clicking it **won't work** — browsers block it from loading the comparison data that way.
+2. Opening `index.html` by double-clicking it **won't work**, browsers block it from loading the comparison data that way.
 3. Instead, serve the folder with a simple local server. From a terminal, inside the project folder:
    ```bash
    python3 -m http.server
    ```
 4. Open `http://localhost:8000` in your browser.
 
-(This limitation goes away once the site is published on GitHub Pages — it's only a local-preview quirk.)
+(This limitation goes away once the site is published on GitHub Pages, it's only a local-preview quirk.)
