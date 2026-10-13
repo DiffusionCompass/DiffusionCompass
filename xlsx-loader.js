@@ -157,5 +157,144 @@ async function loadCriteriaSchema(url){
     });
   });
 
-  return fields;
+  return fields; 
+}
+
+/* Libellés lisibles pour les critères notés sur une échelle numérique.
+   Les valeurs numériques restent utilisées pour le scoring ; seul l'affichage change.
+   Les clés sont les ids de lignes du tableur, en minuscules. */
+const SCALE_LABELS = {
+  modifiability:      { 1: "Poor", 2: "Basic", 3: "Good" },
+  hpclevel:           { 1: "Supported", 2: "Optimized" },
+  activity:           { 1: "Inactive", 2: "Slow", 3: "Active", 4: "Very active" },
+  documentation:      { 1: "Poor", 2: "Basic", 3: "Good", 4: "Excellent" },
+  documentationlevel: { 1: "Poor", 2: "Basic", 3: "Good", 4: "Excellent" },
+};
+
+/* Renvoie la table de libellés d'un critère, ou null s'il n'a pas d'échelle. */
+function getScaleLabels(id){
+  return SCALE_LABELS[String(id || "").toLowerCase()] || null;
+}
+
+/* Convertit une valeur brute ("3") en libellé ("Good"). Sinon renvoie la valeur inchangée. */
+function scaleLabel(id, raw){
+  const labels = getScaleLabels(id);
+  if(!labels) return null;
+  const n = parseInt(String(raw).trim(), 10);
+  return labels[n] || null;
+}
+
+/* =========================================================================
+   CRITERIA HELP (descriptions + level details from sheet 2)
+   ========================================================================= */
+
+/* Returns { idLowercase: { text, levels: {1:"...",2:"..."} } } */
+const DESC_SHEET_NAMES = ["legend","descriptions","description","help"];
+
+async function loadCriteriaDescriptions(url){
+  const map = {};
+  try{
+    const res = await fetch(url, { cache: "no-store" });
+    if(!res.ok) return map;
+    const wb = XLSX.read(await res.arrayBuffer(), { type: "array" });
+    let name = wb.SheetNames.find(n => DESC_SHEET_NAMES.includes(n.trim().toLowerCase()));
+    if(!name && wb.SheetNames.length > 1) name = wb.SheetNames[1];
+    if(!name) return map;
+
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[name], { header: 1, defval: "" });
+    if(!rows.length) return map;
+
+    const header  = rows[0].map(h => String(h).trim().toLowerCase());
+    let idCol     = header.findIndex(h => h.startsWith("criterion_id") || h === "id");
+    if(idCol < 0) idCol = 0;
+    const descCol = header.indexOf("description");
+    const fmtCol  = header.findIndex(h => h.startsWith("format"));
+    const typeCol = header.findIndex(h => h.startsWith("expected type"));
+
+    for(let r = 1; r < rows.length; r++){
+      const id = String(rows[r][idCol] || "").trim().toLowerCase();
+      if(!id) continue;
+      const text = descCol >= 0 ? String(rows[r][descCol] || "").trim() : "";
+
+      // paliers : "1=low, 2=medium, 3=high" (uniquement pour les types "number")
+      const levels = {};
+      const type = typeCol >= 0 ? String(rows[r][typeCol] || "").toLowerCase() : "";
+      const fmt  = fmtCol  >= 0 ? String(rows[r][fmtCol]  || "") : "";
+      if(type.startsWith("number")){
+        const re = /(\d+)\s*=\s*(.+?)(?=\s*[,;|]\s*\d+\s*=|\s*$)/g;
+        let m;
+        while((m = re.exec(fmt))) levels[parseInt(m[1], 10)] = m[2].trim();
+      }
+
+      if(text || Object.keys(levels).length) map[id] = { text, levels };
+    }
+  }catch(e){ console.warn("loadCriteriaDescriptions:", e); }
+  return map;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function hasHelp(id){
+  return !!window.CRITERIA_HELP[String(id || "").toLowerCase()];
+}
+
+/* Wraps a criterion label so it can show the tooltip. */
+function helpLabel(id, label){
+  const cls = hasHelp(id) ? "help-target has-help" : "help-target";
+  return `<span class="${cls}" data-help-id="${escapeHtml(id)}" tabindex="0">${label}</span>`;
+}
+
+function buildHelpHtml(id){
+  const h = window.CRITERIA_HELP[String(id || "").toLowerCase()];
+  if(!h) return "";
+  let html = h.text ? `<div class="help-text">${escapeHtml(h.text)}</div>` : "";
+  const nums = Object.keys(h.levels).map(Number).sort((a,b)=>a-b);
+  if(nums.length){
+    html += '<ul class="help-levels">';
+    nums.forEach(n => {
+      html += `<li><b>${n}</b> = ${escapeHtml(h.levels[n])}</li>`;
+    });
+    html += '</ul>';
+  }
+  return html;
+}
+
+/* One floating tooltip shared by the whole page. Call once. */
+function initHelpTooltips(){
+  if(document.getElementById("helpTip")) return;
+  const tip = document.createElement("div");
+  tip.id = "helpTip";
+  tip.className = "help-tip";
+  document.body.appendChild(tip);
+
+  function show(el){
+    const html = buildHelpHtml(el.dataset.helpId);
+    if(!html){ tip.style.display = "none"; return; }
+    tip.innerHTML = html;
+    tip.style.display = "block";
+    const r = el.getBoundingClientRect();
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let left = Math.min(Math.max(8, r.left), window.innerWidth - tw - 8);
+    let top = r.bottom + 8;
+    if(top + th > window.innerHeight - 8) top = Math.max(8, r.top - th - 8);
+    tip.style.left = left + "px";
+    tip.style.top = top + "px";
+  }
+  function hide(){ tip.style.display = "none"; }
+
+  document.addEventListener("mouseover", e => {
+    const el = e.target.closest && e.target.closest("[data-help-id]");
+    if(el) show(el);
+  });
+  document.addEventListener("mouseout", e => {
+    if(e.target.closest && e.target.closest("[data-help-id]")) hide();
+  });
+  document.addEventListener("focusin", e => {
+    const el = e.target.closest && e.target.closest("[data-help-id]");
+    if(el) show(el);
+  });
+  document.addEventListener("focusout", hide);
+  window.addEventListener("scroll", hide, true);
 }
