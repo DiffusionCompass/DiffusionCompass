@@ -145,9 +145,13 @@ const subNav = document.getElementById('subNav');
 const BOOL_TRUE_DISPLAY  = new Set(["yes","true","✔","x","oui","vrai"]);
 const BOOL_FALSE_DISPLAY = new Set(["no","false","✘","non","faux",""]);
 
-function renderCell(raw){
+function renderCell(raw, criterionId){
   const v   = String(raw || "").trim();
   const low = v.toLowerCase();
+
+  const lbl = scaleLabel(criterionId, v);
+  if(lbl) return `<span class="val-scale val-scale-${v}" title="${v}">${lbl}</span>`;
+
   if(BOOL_TRUE_DISPLAY.has(low))  return '<span class="val-yes">✔</span>';
   if(BOOL_FALSE_DISPLAY.has(low)) return '<span class="val-no">✘</span>';
   return `<span class="val-text">${v}</span>`;
@@ -172,7 +176,10 @@ if(!cat){
   const loadMsg        = document.getElementById('loadMsg');
   const wrap           = document.getElementById('tableWrap');
 
-  loadCriteriaGrid(xlsxUrl).then(({ pipelineNames, rows }) => {
+Promise.all([loadCriteriaGrid(xlsxUrl), loadCriteriaDescriptions(xlsxUrl)])
+  .then(([{ pipelineNames, rows }, help]) => {
+    window.CRITERIA_HELP = help;
+    initHelpTooltips();
     rows = rows.filter(r => !EXCLUDED_IDS.has(r.id.toLowerCase()));
 
     const criteriaCount = rows.filter(
@@ -186,15 +193,14 @@ if(!cat){
 
     rows.forEach(r => {
       if(r.isSection){
-        /* colspan td stays static — only the inner span is sticky */
         html += `<tr class="section-header">
           <td colspan="${pipelineNames.length + 1}">
             <span class="section-label">${r.label || r.id}</span>
           </td>
         </tr>`;
       } else {
-        html += `<tr><td>${r.label}</td>`;
-        r.values.forEach(v => html += `<td>${renderCell(v)}</td>`);
+        html += `<tr><td>${helpLabel(r.id, r.label)}</td>`;
+        r.values.forEach(v => html += `<td>${renderCell(v, r.id)}</td>`);
         html += '</tr>';
       }
     });

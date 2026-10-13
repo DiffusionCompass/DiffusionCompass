@@ -140,7 +140,6 @@ if(urlCat) catSelect.value = urlCat;
 function fieldInputId(f){ return 'df-' + f.id; }
 
 function renderSchema(schema){
-  // group fields in the order their section first appears
   const sections = [];
   const bySection = new Map();
   schema.forEach(f=>{
@@ -153,13 +152,13 @@ function renderSchema(schema){
     html += `<details class="form-section dyn-section" ${i===0 ? 'open' : ''}><summary>${sec}</summary><div class="form-section-body">`;
 
     const fields = bySection.get(sec);
-    const boolFields = fields.filter(f=>f.type==='bool');
+    const boolFields  = fields.filter(f=>f.type==='bool');
     const otherFields = fields.filter(f=>f.type!=='bool');
 
     if(boolFields.length){
       html += '<div class="checkbox-grid">';
       boolFields.forEach(f=>{
-        html += `<label class="checkbox-item"><input type="checkbox" id="${fieldInputId(f)}"> ${f.label}</label>`;
+        html += `<label class="checkbox-item"><input type="checkbox" id="${fieldInputId(f)}"> ${helpLabel(f.id, f.label)}</label>`;
       });
       html += '</div>';
     }
@@ -167,27 +166,30 @@ function renderSchema(schema){
     otherFields.forEach(f=>{
       html += '<div class="dyn-field">';
       if(f.type === 'number'){
-        // These are always small rating scales (1 to 4) in the source
-        // spreadsheets (modifiability, hpcLevel, activity, documentationLevel)
-        // — use a dropdown instead of a free-text number field so submissions
-        // stay within the scale everyone else's answers were rated on.
-        const NUM_MIN = 1, NUM_MAX = 4;
-        html += `<label class="dyn-field-label" for="${fieldInputId(f)}">${f.label}</label><select id="${fieldInputId(f)}">`;
+        const labels = getScaleLabels(f.id);
+        const ex = f.example ? parseInt(f.example, 10) : null;
+        html += `<label class="dyn-field-label" for="${fieldInputId(f)}">${helpLabel(f.id, f.label)}</label><select id="${fieldInputId(f)}">`;
         html += `<option value="">— not specified —</option>`;
-        for(let n = NUM_MIN; n <= NUM_MAX; n++){
-          const sel = (f.example && parseInt(f.example, 10) === n) ? ' selected' : '';
-          html += `<option value="${n}"${sel}>${n}</option>`;
+        if(labels){
+          Object.keys(labels).forEach(n=>{
+            const sel = (ex === Number(n)) ? ' selected' : '';
+            html += `<option value="${n}"${sel}>${labels[n]}</option>`;
+          });
+        } else {
+          for(let n = 1; n <= 4; n++){
+            html += `<option value="${n}"${ex === n ? ' selected' : ''}>${n}</option>`;
+          }
         }
         html += '</select>';
       } else if(f.type === 'list'){
-        html += `<label class="dyn-field-label">${f.label}</label><div class="checkbox-grid">`;
+        html += `<label class="dyn-field-label">${helpLabel(f.id, f.label)}</label><div class="checkbox-grid">`;
         f.options.forEach(opt=>{
           html += `<label class="checkbox-item"><input type="checkbox" data-list-id="${f.id}" value="${opt}"> ${opt}</label>`;
         });
         html += '</div>';
       } else {
-        html += `<label class="dyn-field-label" for="${fieldInputId(f)}">${f.label}</label>
-                  <input type="text" id="${fieldInputId(f)}" placeholder="${f.example ? 'e.g. ' + f.example : ''}">`;
+        html += `<label class="dyn-field-label" for="${fieldInputId(f)}">${helpLabel(f.id, f.label)}</label>
+                 <input type="text" id="${fieldInputId(f)}" placeholder="${f.example ? 'e.g. ' + f.example : ''}">`;
       }
       html += '</div>';
     });
@@ -199,7 +201,6 @@ function renderSchema(schema){
 }
 
 function readSchemaValues(){
-  // Returns an array of { id, label, value } for every field in the current schema.
   return currentSchema.map(f=>{
     let value = '';
     if(f.type === 'bool'){
@@ -209,6 +210,8 @@ function readSchemaValues(){
       value = checked.join(',');
     } else {
       value = document.getElementById(fieldInputId(f)).value.trim();
+      const lbl = scaleLabel(f.id, value);
+      if(lbl) value = `${value} (${lbl})`;
     }
     return { id: f.id, label: f.label, value };
   });
@@ -236,6 +239,8 @@ async function loadCategory(cat){
     schemaMsg.innerHTML = '<span class="spinner"></span>Loading criteria from ' + meta.xlsx + '…';
 
     const schema = await loadCriteriaSchema(meta.xlsx);
+    window.CRITERIA_HELP = await loadCriteriaDescriptions(meta.xlsx);
+    initHelpTooltips();
     currentSchema = schema;
     renderSchema(schema);
     schemaMsg.textContent = `✓ ${schema.length} criteria loaded from ${meta.xlsx} — fill in as many as you can.`;
