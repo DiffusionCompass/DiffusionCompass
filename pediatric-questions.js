@@ -80,17 +80,6 @@ window.QUESTIONS = [
       { label:"I'm not sure / interested in everything", score:null, note:"No points awarded — this option is skipped in scoring." },
     ]
   },
-  { id:"custom", eyebrow:"Customization", type:"single",
-    title:"How important is it to be able to modify the pipeline's parameters?",
-    options:[
-      { label:"Very important", score:p=>p.modifiability * 2 + (p.polyvalent?2:0),
-        note:"+2 per modifiability level (1-3), +2 more if the pipeline is versatile/multi-software." },
-      { label:"Moderate", score:p=>p.modifiability,
-        note:"+1 pt per modifiability level (1-3)." },
-      { label:"Not important", score:p=>(3-p.modifiability),
-        note:"Rewards low modifiability (inverse score)" },
-    ]
-  },
   { id:"software", eyebrow:"Software", type:"single",
     title:"Would you prefer to use containerized pipelines?",
     options:[
@@ -118,7 +107,8 @@ window.QUESTIONS = [
         note:"+1 if resume on error support is available." },
       { label:"Not important", score:null,
         note:"No points awarded — this question is skipped in scoring." },
-    ]},
+    ]
+  },
   { id:"compute", eyebrow:"Environment", type:"single",
     title:"What compute environment do you have access to?",
     options:[
@@ -139,17 +129,6 @@ window.QUESTIONS = [
       { label:"A graphical interface or a web platform", score:p=>(p.interface==="gui"||p.interface==="gui+terminal"||p.interface==="web") ? 3 : 0,
         note:"+3 if the interface is 'gui', 'gui+terminal', or 'web'." },
       { label:"Doesn't matter", score:null, note:"No points awarded — this question is skipped in scoring." },
-    ]
-  },
-  { id:"maintenance", eyebrow:"Longevity", type:"single",
-    title:"How important is it for the pipeline to be actively maintained?",
-    options:[
-      { label:"Very important", score:p=>p.activity * 2,
-        note:"+2 per activity level (1-4)." },
-      { label:"Moderate", score:p=>p.activity,
-        note:"+1 per activity level (1-4)." },
-      { label:"Not important", score:null,
-        note:"No points awarded — this question is skipped in scoring." },
     ]
   },
 ];
