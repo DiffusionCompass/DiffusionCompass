@@ -218,15 +218,23 @@ async function loadCriteriaDescriptions(url){
 
       // paliers : "1=low, 2=medium, 3=high" (uniquement pour les types "number")
       const levels = {};
+      const levelNames = {};
       const type = typeCol >= 0 ? String(rows[r][typeCol] || "").toLowerCase() : "";
       const fmt  = fmtCol  >= 0 ? String(rows[r][fmtCol]  || "") : "";
       if(type.startsWith("number")){
-        const re = /(\d+)\s*=\s*(.+?)(?=\s*[,;|]\s*\d+\s*=|\s*$)/g;
-        let m;
-        while((m = re.exec(fmt))) levels[parseInt(m[1], 10)] = m[2].trim();
+        // coupe sur , ; | seulement si ce qui suit ressemble à "clé="
+        const chunks = fmt.split(/\s*[,;|]\s*(?=[A-Za-z0-9][A-Za-z0-9 \-]{0,20}\s*=)/);
+        chunks.forEach((chunk, i) => {
+          const m = chunk.match(/^\s*([^=]+?)\s*=\s*([\s\S]+?)\s*$/);
+          if(!m) return;
+          const key = m[1].trim();
+          const n = /^\d+$/.test(key) ? parseInt(key, 10) : i + 1;
+          levels[n] = m[2].trim();
+          if(!/^\d+$/.test(key)) levelNames[n] = key;
+        });
       }
 
-      if(text || Object.keys(levels).length) map[id] = { text, levels };
+      if(text || Object.keys(levels).length) map[id] = { text, levels, levelNames };
     }
   }catch(e){ console.warn("loadCriteriaDescriptions:", e); }
   return map;
@@ -252,9 +260,12 @@ function buildHelpHtml(id){
   let html = h.text ? `<div class="help-text">${escapeHtml(h.text)}</div>` : "";
   const nums = Object.keys(h.levels).map(Number).sort((a,b)=>a-b);
   if(nums.length){
+    const labels = getScaleLabels(id) || {};
     html += '<ul class="help-levels">';
     nums.forEach(n => {
-      html += `<li><b>${n}</b> = ${escapeHtml(h.levels[n])}</li>`;
+      const name = (h.levelNames && h.levelNames[n]) || labels[n] || String(n);
+      const title = name.charAt(0).toUpperCase() + name.slice(1);
+      html += `<li><b>${escapeHtml(title)}</b> : ${escapeHtml(h.levels[n])}</li>`;
     });
     html += '</ul>';
   }
